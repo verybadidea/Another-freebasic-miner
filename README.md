@@ -6,4 +6,3 @@ Soon
 Test
 =======
 Soon (when I find out how git works...)
->>>>>>> 4e74dbf4c35e18c212d310bba133c7eeabb95ce2
