@@ -1,5 +1,3 @@
-123
-
 #include once "../../_code_lib_new_/screen_v03.bi"
 #include once "../../_code_lib_new_/keyboard_v01.bi"
 #include once "../../_code_lib_new_/image_v03.bi"
