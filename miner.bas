@@ -1,41 +1,26 @@
-#include once "../../_code_lib_new_/screen_v03.bi"
-#include once "../../_code_lib_new_/keyboard_v01.bi"
-#include once "../../_code_lib_new_/image_v03.bi"
-#include once "../../_code_lib_new_/image_buffer_v01.bi"
-#include once "../../_code_lib_new_/string_v01.bi"
-#include once "../../_code_lib_new_/int2d_v02.bi"
-#include once "../../_code_lib_new_/sgl2d_v03.bi"
-#include once "../../_code_lib_new_/dbl2d_v03.bi"
-#include once "../../_code_lib_new_/event_timer_v01.bi"
-#include once "../../_code_lib_new_/loop_timer_v01.bi"
-#include once "../../_code_lib_new_/int2d_flt2d_v01.bi"
-#include once "../../_code_lib_new_/file_func_v01.bi"
-#include once "../../_code_lib_new_/logger_v01.bi"
-#include once "../../_code_lib_new_/font_v02.bi"
-'#include once "../../_code_lib_new_/mouse_v01.bi"
+#include once "inc_lib/screen_v03.bi"
+#include once "inc_lib/keyboard_v01.bi"
+#include once "inc_lib/image_v03.bi"
+#include once "inc_lib/image_buffer_v01.bi"
+#include once "inc_lib/string_v01.bi"
+#include once "inc_lib/int2d_v02.bi"
+#include once "inc_lib/sgl2d_v03.bi"
+#include once "inc_lib/dbl2d_v03.bi"
+#include once "inc_lib/event_timer_v01.bi"
+#include once "inc_lib/loop_timer_v01.bi"
+#include once "inc_lib/int2d_flt2d_v01.bi"
+#include once "inc_lib/file_func_v01.bi"
+#include once "inc_lib/logger_v01.bi"
+#include once "inc_lib//font_v02.bi"
+#include once "inc_lib/mouse_v01.bi"
 
-'~ #include once "inc_lib/screen_v03.bi"
-'~ #include once "inc_lib/keyboard_v01.bi"
-'~ #include once "inc_lib/image_v03.bi"
-'~ #include once "inc_lib/image_buffer_v01.bi"
-'~ #include once "inc_lib/string_v01.bi"
-'~ #include once "inc_lib/int2d_v02.bi"
-'~ #include once "inc_lib/sgl2d_v03.bi"
-'~ #include once "inc_lib/dbl2d_v03.bi"
-'~ #include once "inc_lib/event_timer_v01.bi"
-'~ #include once "inc_lib/loop_timer_v01.bi"
-'~ #include once "inc_lib/int2d_flt2d_v01.bi"
-'~ #include once "inc_lib/file_func_v01.bi"
-'~ #include once "inc_lib/logger_v01.bi"
-'~ #include once "inc_lib/mouse_v01.bi"
+#define float single
+#define flt2d sgl2d
+#define toFlt2d toSgl2d
 
-'#define float single
-'#define flt2d sgl2d
-'#define toFlt2d toSgl2d
-
-#define float double
-#define flt2d dbl2d
-#define toFlt2d toDbl2d
+'#define float double
+'#define flt2d dbl2d
+'#define toFlt2d toDbl2d
 
 const SLEEP_MS = 1 'default 1 (max FPS), higher values for testing, e.g 15 (~60Hz), or 50 (~20Hz)
 const GRID_SIZE_X = 64, GRID_HALF_X = GRID_SIZE_X \ 2
