@@ -80,4 +80,8 @@ Done:
 	convert -verbose -crop 120x16+37+108 test.bmp test2.bmp
 	mogrify -verbose -crop 120x16+37+108 *.bmp
 	ls -lU
-    https://en.wikipedia.org/wiki/Markdown
+	https://en.wikipedia.org/wiki/Markdown
+	git status
+	git add *
+	git commit -m 'message'
+	git push origin master
