@@ -11,7 +11,8 @@ type timer_type
 	declare sub stop_()
 	declare function inactive() as boolean
 	declare function ended() as boolean
-	declare sub restart()
+	declare function timeLeft() as double
+	'~ declare sub restart()
 end type
 
 sub timer_type.start(duration as double)
@@ -41,9 +42,14 @@ function timer_type.ended() as boolean
 	end if
 end function
 
-'continue timer, add same delay to original tStart
-sub timer_type.restart()
-	tStart = tEnd
-	tEnd = tStart + tSpan
-	active = 1
-end sub
+function timer_type.timeLeft() as double
+	dim as double tLeft = tEnd - timer
+	return iif(tLeft < 0, 0, tLeft)
+end function
+
+'~ 'continue timer, add same delay to original tStart
+'~ sub timer_type.restart() 'extend time?
+	'~ tStart = tEnd
+	'~ tEnd = tStart + tSpan
+	'~ active = 1
+'~ end sub

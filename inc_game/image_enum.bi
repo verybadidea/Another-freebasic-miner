@@ -1,4 +1,6 @@
-enum E_IMG_ACT
+enum E_IMG_ALL
+	img_null
+	
 	act_climb_1
 	act_climb_2
 	act_climb_3
@@ -32,9 +34,7 @@ enum E_IMG_ACT
 	act_wink_2
 	act_wink_3
 	act_wink_4
-end enum
-
-enum E_IMG_BG
+	
 	bg_block_2a
 	bg_block_2b
 	bg_block_2
@@ -82,9 +82,7 @@ enum E_IMG_BG
 	bg_wall_3
 	bg_wall_4
 	bg_wall_5
-end enum
 
-enum E_IMG_FG
 	fg_artefact_bone_1
 	fg_artefact_bone_2
 	fg_artefact_g1
@@ -190,9 +188,7 @@ enum E_IMG_FG
 	fg_tile_deco_0
 	fg_tile_deco_1
 	fg_tile_deco_2
-end enum
 
-enum E_IMG_OVER
 	ol_health_0
 	ol_health_1
 	ol_health_2
@@ -202,4 +198,7 @@ enum E_IMG_OVER
 	ol_health_6
 	ol_health_7
 	ol_health_8
+	ol_item_pick
+
+	img_overflow
 end enum

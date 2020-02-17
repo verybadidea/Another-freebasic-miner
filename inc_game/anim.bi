@@ -1,4 +1,3 @@
-
 type anim_type
 	private:
 	dim as integer active = 0

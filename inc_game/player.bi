@@ -5,6 +5,7 @@ const NUM_IMG_WINK = 4
 const NUM_IMG_CLIMB = 4
 const NUM_IMG_FALL = 2
 const NUM_IMG_HEALTH = 9
+const NUM_IMG_PICK = 2
 
 enum E_MINER_STATE
 	MINER_NONE '0
@@ -20,6 +21,13 @@ enum E_MINER_STATE
 	MINER_DEAD '10
 end enum
 
+enum E_TOOL
+	TOOL_LADDER '0
+	TOOl_PICK '1
+	TOOL_INVALID '2
+end enum
+
+
 const as integer MINER_MAX_HEALTH = NUM_IMG_HEALTH - 1
 const as integer MINER_HALF_WIDTH = 16 'pixels
 const as integer MINER_LADDER_DIST = 18 'pixels
@@ -31,26 +39,28 @@ const as float MINER_MAX_FALL_SPEED = 400 'pixels/s
 const as float MINER_MIN_FALL_DIST = 3 'pixels
 
 type player_type
-	dim as integer numLadders = 10
 	public:
 	dim as flt2d posMap 'position in map / world [pixels]
 	dim as flt2d posScr 'position on screen [pixels]
-	dim as int2d requestDir  = int2d(0, 0)
-	dim as int2d targetGridPos = int2d(-1, -1)
+	dim as timer_type idleWaitTmr
 	private:
 	dim as multikey_type mkey
 	dim as map_type ptr pMap_
+	dim as image_type ptr pImg 'current image to display
+	dim as int2d requestDir  = int2d(0, 0)
+	dim as int2d targetGridPos = int2d(-1, -1)
 	dim as integer state, prevState
 	dim as integer health
-	dim as image_type ptr pImg 'current image to display
+	dim as integer numLadders = 10
+	dim as integer selectedTool
 	dim as float fallSpeed = 0 'pixels/s
-	dim as timer_type idleWaitTmr
 	dim as anim_type anim
 	dim as image_type imgWalk(0 to 1, NUM_IMG_WALK-1)
 	dim as image_type imgWink(NUM_IMG_WINK-1)
 	dim as image_type imgClimb(NUM_IMG_CLIMB-1)
 	dim as image_type imgFall(NUM_IMG_FALL-1)
 	dim as image_type imgHealth(NUM_IMG_HEALTH-1)
+	dim as image_type imgPick(NUM_IMG_PICK-1)
 	dim as image_type imgDead
 	public:
 	declare function init_() as integer
@@ -70,28 +80,32 @@ end type
 'copy from image buffer
 function player_type.init_() as integer
 	for i as integer = 0 to NUM_IMG_WINK - 1
-		if imgBufAct.validImage(act_wink_1 + i) = false then return -1
-		imgBufAct.image(act_wink_1 + i).copyTo(imgWink(i))
+		if imgBufAll.validImage(act_wink_1 + i) = false then return -1
+		imgBufAll.image(act_wink_1 + i).copyTo(imgWink(i))
 	next
 	for i as integer = 0 to NUM_IMG_WALK - 1
-		if imgBufAct.validImage(act_walk_1 + i) = false then return -2
-		imgBufAct.image(act_walk_1 + i).copyTo(imgWalk(DIR_LEFT, i))
-		imgBufAct.image(act_walk_1 + i).hFlipTo(imgWalk(DIR_RIGHT, i))
+		if imgBufAll.validImage(act_walk_1 + i) = false then return -2
+		imgBufAll.image(act_walk_1 + i).copyTo(imgWalk(DIR_LEFT, i))
+		imgBufAll.image(act_walk_1 + i).hFlipTo(imgWalk(DIR_RIGHT, i))
 	next
 	for i as integer = 0 to NUM_IMG_CLIMB - 1
-		if imgBufAct.validImage(act_climb_1 + i) = false then return -3
-		imgBufAct.image(act_climb_1 + i).copyTo(imgClimb(i))
+		if imgBufAll.validImage(act_climb_1 + i) = false then return -3
+		imgBufAll.image(act_climb_1 + i).copyTo(imgClimb(i))
 	next
 	for i as integer = 0 to NUM_IMG_FALL - 1
-		if imgBufAct.validImage(act_fall_1 + i) = false then return -4
-		imgBufAct.image(act_fall_1 + i).copyTo(imgFall(i))
+		if imgBufAll.validImage(act_fall_1 + i) = false then return -4
+		imgBufAll.image(act_fall_1 + i).copyTo(imgFall(i))
 	next
-	if imgBufAct.validImage(act_dead) = false then return -6
-	imgBufAct.image(act_dead).copyTo(imgDead)
-	'
+	for i as integer = 0 to NUM_IMG_PICK - 1
+		if imgBufAll.validImage(act_pick_1 + i) = false then return -5
+		imgBufAll.image(act_pick_1 + i).copyTo(imgPick(i))
+	next
+	if imgBufAll.validImage(act_dead) = false then return -6
+	imgBufAll.image(act_dead).copyTo(imgDead)
+	'healthbar
 	for i as integer = 0 to NUM_IMG_HEALTH - 1
-		if imgBufOl.validImage(ol_health_0 + i) = false then return -5
-		imgBufOl.image(ol_health_0 + i).copyTo(imgHealth(i))
+		if imgBufAll.validImage(ol_health_0 + i) = false then return -7
+		imgBufAll.image(ol_health_0 + i).copyTo(imgHealth(i))
 	next
 	anim.init(pImg)
 	return 0
@@ -105,14 +119,33 @@ sub player_type.reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	prevState = MINER_NONE
 	pImg = @imgWink(0)
 	health = MINER_MAX_HEALTH
+	selectedTool = TOOL_PICK
 end sub
 
 sub player_type.draw_()
-	pImg->drawxy(posScr.x, posScr.y) 'miner image
-	'pImg->drawxym(posScr.x, posScr.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+	'highlight target tile with dashed square
+	if pMap_->validPos(targetGridPos) then
+		dim as int2d targetScrPos = getScrPos(targetGridPos, posMap - posScr)
+		line(targetScrPos.x - GRID_HALF_X - 1, targetScrPos.y - GRID_HALF_Y - 1)_
+			-step(GRID_SIZE_X, GRID_SIZE_Y), rgba(255, 255, 255, 255), b, &b1010101010101010
+	end if
+	'draw miner image
+	pImg->drawxy(posScr.x, posScr.y)
+	'draw health bar
 	if health >= 0 and health <= MINER_MAX_HEALTH then
 		imgHealth(health).drawxym(scr.edge.x - 10 , 10, IHA_RIGHT, IVA_TOP, IDM_ALPHA)
 	end if
+	'draw tool indicator
+	line(scr.edge.x - 85, scr.edge.y - 85)-step(63 + 14, 63 + 14), rgba(127,127,127,255), b
+	line(scr.edge.x - 84, scr.edge.y - 84)-step(63 + 12, 63 + 12), rgba(63,63,63,255), b
+	line(scr.edge.x - 83, scr.edge.y - 83)-step(63 + 10, 63 + 10), rgba(0,0,0,127), bf
+	select case selectedTool
+	case TOOL_LADDER
+		imgBufAll.image(fg_construction_ladder).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+		f1.printTextAk(scr.edge.x - 80 + 64, scr.edge.y - 90 + 50, str(numLadders), FHA_RIGHT)
+	case TOOL_PICK
+		imgBufAll.image(ol_item_pick).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+	end select
 end sub
 
 sub player_type.processKeyInput()
@@ -146,19 +179,47 @@ sub player_type.processKeyInput()
 	else
 		if prevState = MINER_CLIMB_DOWN then state = MINER_CLIMB_STOP
 	end if
+	if mkey.pressed(FB.SC_PAGEDOWN) then
+		'anim.stop_(@imgWink(0))
+		idleWaitTmr.start(5.0)
+		selectedTool += 1
+		if selectedTool >= TOOL_INVALID then selectedTool = 0 'first tool
+		'logger.add("Selected tool: " & selectedTool)
+	end if
+	if mkey.pressed(FB.SC_PAGEUP) then
+		'anim.stop_(@imgWink(0))
+		idleWaitTmr.start(5.0)
+		selectedTool -= 1
+		if selectedTool < 0 then selectedTool = TOOL_INVALID - 1 'last tool
+		'logger.add("Selected tool: " & selectedTool)
+	end if
+	
 	if mkey.pressed(FB.SC_SPACE) then
+		'anim.stop_(@imgWink(0))
+		idleWaitTmr.start(5.0)
 		if pMap_->validPos(targetGridPos) then
-			if (pMap_->getBgProp(targetGridPos) and (IS_SOLID or IS_CLIMB)) = 0 then
-				if numLadders > 0 then
-					numLadders -= 1
-					pMap_->setTile(targetGridPos, @imgBufFg.image(fg_construction_ladder), 0, IS_CLIMB)
-					logger.add("ladder placed")
+			select case selectedTool
+			case TOOL_LADDER
+				if (pMap_->getBgProp(targetGridPos) and (IS_SOLID or IS_CLIMB)) = 0 then
+					if numLadders > 0 then
+						numLadders -= 1
+						dim as integer bgImgId = iif(targetGridPos.y = 0, -1, bg_shadow)
+						pMap_->setTile(targetGridPos, fg_construction_ladder, bgImgId, IS_CLIMB)
+					else
+						logger.add("No more ladders")
+					end if
 				else
-					logger.add("No more ladders")
+					logger.add("Cannot build there")
 				end if
-			else
-				logger.add("Cannot build there")
-			end if
+			case TOOL_PICK
+				if (pMap_->getBgProp(targetGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
+					dim as integer bgImgId = iif(targetGridPos.y = 0, -1, bg_shadow)
+					pMap_->setTile(targetGridPos, 0, bgImgId, IS_EMPTY)
+					logger.add("Destroy OK")
+				else
+					logger.add("Cannot destroy that: " & pMap_->getBgProp(targetGridPos))
+				end if
+			end select
 		end if
 	end if
 end sub

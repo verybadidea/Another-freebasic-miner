@@ -16,6 +16,11 @@ constructor int2d(x as integer, y as integer)
 	this.x = x : this.y = y
 end constructor
 
+' "x, y"
+operator int2d.cast () as string
+  return str(x) & "," & str(y)
+end operator
+
 operator = (a as int2d, b as int2d) as boolean
 	if a.x <> b.x then return false
 	if a.y <> b.y then return false
@@ -25,11 +30,6 @@ end operator
 operator <> (a as int2d, b as int2d) as boolean
 	if a.x = b.x and a.y = b.y then return false
 	return true
-end operator
-
-' "x, y"
-operator int2d.cast () as string
-  return str(x) & "," & str(y)
 end operator
 
 ' a + b 
@@ -63,6 +63,6 @@ operator \ (a as int2d, b as int2d) as int2d
 end operator
 
 ' a \ div
-operator \ (a as int2d, div as integer) as int2d
-	return type(a.x \ div, a.y \ div)
+operator \ (a as int2d, divider as integer) as int2d
+	return type(a.x \ divider, a.y \ divider)
 end operator

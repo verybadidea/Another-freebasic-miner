@@ -1,5 +1,5 @@
 #include once "file.bi"
-#include once "file_func_v01.bi"
+#include once "file_func_v02.bi"
 #include once "bmp_v01.bi"
 #include once "int2d_v02.bi"
 
