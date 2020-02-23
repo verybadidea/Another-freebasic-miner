@@ -100,6 +100,7 @@ Done:
 	https://en.wikipedia.org/wiki/Markdown
 	git status
 	git add *
+	git status
 	git commit -m 'message'
 	git push origin master
 	https://minecraft.gamepedia.com/Controls
