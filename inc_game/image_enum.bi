@@ -198,6 +198,7 @@ enum E_IMG_ALL
 	ol_health_6
 	ol_health_7
 	ol_health_8
+	ol_item_drill
 	ol_item_pick
 
 	img_overflow

@@ -1,6 +1,6 @@
 type anim_type
 	private:
-	dim as integer active = 0
+	dim as boolean active = false
 	dim as double tFrame = 0.0
 	dim as integer iFrame = 0
 	dim as double tFrameDuration = 0.50
@@ -13,6 +13,7 @@ type anim_type
 	declare sub start(pImgArray as image_type ptr, numImages as integer, numLoops as integer, tFrameDuration as double)
 	declare sub update(dt as double)
 	declare sub stop_(pImgArray as image_type ptr)
+	'declare function isActive() as boolean
 end type
 
 sub anim_type.init(byref pPlayerImg as image_type ptr)
@@ -28,12 +29,12 @@ sub anim_type.start(pImgArray as image_type ptr, numImages as integer, numLoops 
 	this.numLoops = numLoops
 	this.pImgArray = pImgArray
 	*ppTargetImg = pImgArray 'set target image
-	active = 1
+	active = true
 	iLoop = 0
 end sub
 
 sub anim_type.update(dt as double)
-	if active = 0 then exit sub
+	if active = false then exit sub
 	tFrame += dt
 	if tFrame > tFrameDuration then
 		tFrame = 0.0 'change to tFrame -= tFrameDuration ?
@@ -41,7 +42,7 @@ sub anim_type.update(dt as double)
 		if iFrame >= numImages then
 			iFrame = 0
 			iLoop += 1
-			if numLoops > 0 and iLoop >= numLoops then active = 0
+			if numLoops > 0 and iLoop >= numLoops then active = false
 		end if
 		*ppTargetImg = pImgArray + iFrame 'update current miner image
 	end if
@@ -49,6 +50,10 @@ end sub
 
 'call: stop(optional new image to set)
 sub anim_type.stop_(pImgArray as image_type ptr)
-	active = 0
+	active = false
 	if pImgArray <> 0 then *ppTargetImg = pImgArray
 end sub
+
+'function anim_type.isActive() as boolean
+'	return active
+'end function

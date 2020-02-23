@@ -5,11 +5,11 @@ type timer_type
 	dim as double tEnd
 	dim as double tStart
 	dim as double tSpan
-	dim as integer active
+	dim as boolean active = false
 	public:
 	declare sub start(duration as double)
 	declare sub stop_()
-	declare function inactive() as boolean
+	declare function isActive() as boolean
 	declare function ended() as boolean
 	declare function timeLeft() as double
 	'~ declare sub restart()
@@ -19,23 +19,23 @@ sub timer_type.start(duration as double)
 	tStart = timer()
 	tSpan = duration
 	tEnd = tStart + tSpan
-	active = 1
+	active = true
 end sub
 
 sub timer_type.stop_()
-	active = 0
+	active = false
 end sub
 
 'does NOT update the timer status
-function timer_type.inactive() as boolean
-	if active = 0 then return true
+function timer_type.isActive() as boolean
+	return active
 end function
 
 'check only once in loop! Inactive after ended.
 function timer_type.ended() as boolean
-	if active = 0 then return false
+	if active = false then return false
 	if timer() >= tEnd then
-		active = 0
+		active = false
 		return true
 	else
 		return false

@@ -5,4 +5,3 @@ end function
 function rndChoice(choiceArray() as integer) as integer
 	return int(rnd * (ubound(choiceArray) + 1))
 end function
-

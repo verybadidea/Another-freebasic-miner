@@ -115,18 +115,18 @@ function main() as string
 				else 
 					if yi = 1 then
 						'second row grass covered dirt block
-						map.setTile(int2d(xi, yi), 0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID)
+						map.setTile(int2d(xi, yi), 0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID, 5)
 					else
 						'normal dirt blocks
-						map.setTile(int2d(xi, yi), 0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID)
+						map.setTile(int2d(xi, yi), 0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID, 5)
 					end if
 					if rnd < 0.2 then
 						'random gaps
-						map.setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY)
+						map.setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY, 0)
 					end if
 					if rnd < 0.4 then
 					'random ladder
-						map.setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB)
+						map.setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
 					end if
 				end if
 			end if
@@ -139,7 +139,7 @@ function main() as string
 		if map.getBgProp(int2d(xi, 1)) and IS_SOLID then
 			if (map.getBgProp(int2d(xi, 0)) and IS_SOLID) = 0 then
 				dim as integer imageIndex = plantsArray(rndChoice(plantsArray()))
-				map.setTile(int2d(xi, 0), imageIndex, 0, IS_FLOWER)
+				map.setTile(int2d(xi, 0), imageIndex, 0, IS_FLOWER, 1)
 			end if
 		end if
 	next
@@ -171,10 +171,6 @@ function main() as string
 		scr.clearScreen(rgba(0, 0, 0, 255))
 		map.draw_(miner.posMap - miner.posScr)
 		'locate 2,2: print loopTimer.getRunTime()
-		'move this stuff to miner.dar as well?
-		locate 1,1: print miner.getStateStr()
-		locate 2,1: print getGridPos(miner.posMap)
-		locate 3,1: print format(miner.idleWaitTmr.timeLeft(), "0.0")
 		'in-game logger
 		line(0, scr.size.y - 1)-step(scr.size.x - 1, -logger.numEntries * 16), rgba(0, 0, 0, 127), bf
 		for i as integer = 0 to logger.numEntries - 1

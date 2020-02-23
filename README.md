@@ -12,8 +12,18 @@ Control keys:
 
 Todo:
 
-* pick axe animation
-* break stuff animation sprites on tiles, time
+* Check player fall when block removed below player
+* Do not allow drilling on when ladder
+* Improve draw tool indicator code
+* Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
+* Container / class for player images?
+* Drill is faster, but no resource?
+* separate keys for build & destroy
+* Auto update destroy indicator? pick, drill, shovel, ... No?
+* Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
+* change from damage to health, init, remove public
+* Freeze mizer during action
+* Block movement during action, e.g. pick axe. Or stop action on move. State Busy?
 * reset idle on any key press (e.g. escape)' and start action anim
 * draw square centered ?
 * plant supporting block removed? remove plant
@@ -22,10 +32,14 @@ Todo:
 * use player size struct, AABB? note: height not centered with tile
 * fix size of images? 66x66 ?
 * build stuff
+* Display player red on getting damaged
 * shovel action
 * make map shared?
 * map load/save
 * map editor
+* add sound
+* Change anim.start(), supply array instead of first image + numImages
+* Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
 * clean up image.bi : alignment struct -> single center flag, vert/horz combined
 * font.bi : change pTrim to struct, and use redim
 * font.bi : add vert align
@@ -51,6 +65,12 @@ Don't:
 
 Done:
 
+* 22-02-2020: break stuff animation sprites on tiles
+* 22-02-2020: Block health (damage) added
+* 22-02-2020: pick axe animation
+* 17-02-2020: plants, flowers, Animate all plants synchrone
+* 17-02-2020: use in map image index for Bg,Fg instead of poninters?
+* 16-02-2020: load all images into 1 array, change enum
 * animation class
 * start fall speed + incremental fall speed + max fall speed?
 * bug: wall climbing (when when falling from ladder)
@@ -66,9 +86,6 @@ Done:
 * display bgProp on tiles
 * move draw tool to miner class
 * break stuff
-* 16-02-2020: load all images into 1 array, change enum
-* 17-02-2020: use in map image index for Bg,Fg instead of poninters?
-* 17-02-2020: plants, flowers, Animate all plants synchrone
 
 <u>Notes</u>
 
@@ -85,3 +102,8 @@ Done:
 	git add *
 	git commit -m 'message'
 	git push origin master
+	https://minecraft.gamepedia.com/Controls
+
+long pause
+start with something simple each day
+don't worry to much about the design, implement first then improve

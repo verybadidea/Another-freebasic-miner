@@ -12,6 +12,7 @@ const as short IS_INVALID = &h8000
 type map_type
 	public:
 	dim as int2d size
+	dim as short health(any, any)
 	private:
 	dim as short bgId(any, any)
 	dim as short fgId(any, any)
@@ -27,7 +28,7 @@ type map_type
 	declare function validIndex(x as integer, y as integer) as boolean
 	declare function validPos(pos_ as int2d) as boolean
 	declare function getBgProp(gridPos as int2d) as short
-	declare sub setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0)
+	declare sub setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0, health_ as short = -1)
 	declare sub draw_(scrMapDist as flt2d)
 	declare destructor()
 end type
@@ -37,6 +38,7 @@ function map_type.alloc(size as int2d) as integer
 	redim bgId(size.x, size.y)
 	redim fgId(size.x, size.y)
 	redim bgProp(size.x, size.y)
+	redim health(size.x, size.y)
 	plantAnimSeq = 0
 	plantAnimTmr.start(plantAnimDuration)
 	return 0
@@ -48,6 +50,7 @@ sub map_type.setRandomImages()
 			bgId(xi, yi) = rndRange(bg_block_2a, bg_wall_5)
 			fgId(xi, yi) = rndRange(fg_artefact_bone_1, fg_tile_deco_2)
 			bgProp(size.x, size.y) = IS_EMPTY
+			health(size.x, size.y) = 1
 		next
 	next
 end sub
@@ -75,11 +78,12 @@ function map_type.getBgProp(gridPos as int2d) as short
 end function
 
 'Id < 0: do not set/change
-sub map_type.setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0)
+sub map_type.setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0, health_ as short = -1)
 	if validPos(pos_) then
 		if fgId >= 0 then this.fgId(pos_.x, pos_.y) = fgId
 		if bgId >= 0 then this.bgId(pos_.x, pos_.y) = bgId
 		if flags <> 0 then bgProp(pos_.x, pos_.y) = flags
+		if health_ <> -1 then health(pos_.x, pos_.y) = health_
 	end if
 end sub
 
@@ -99,16 +103,27 @@ sub map_type.draw_(scrMapDist as flt2d)
 		for xi as integer = gridPosLt.x to gridPosBr.x
 			dim as int2d tileScrPos = getScrPos(int2d(xi, yi), scrMapDist)
 			if validIndex(xi, yi) then
+				'draw background tiles
 				imgId = bgId(xi, yi)
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_PSET)
 				end if
+				'draw foreground tiles, flowers / grass animated
 				imgId = fgId(xi, yi) + iif((bgProp(xi, yi) and IS_FLOWER), plantAnimFrame(plantAnimSeq), 0)
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 				end if
+				'draw cracks on damaged blocks
+				if (bgProp(xi, yi) and IS_SOLID) then
+					dim as integer damage = 4 - health(xi, yi)
+					if damage >= 0 and damage < 4 then 'range: 0...3
+						imgId = fg_tile_damage_1 + damage
+						imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+					end if
+				end if
 				'display tile properties bits
 				'f1.printTextAk(tileScrPos.x, tileScrPos.y, hex(bgProp(xi, yi)), FHA_CENTER)
+				'f1.printTextAk(tileScrPos.x, tileScrPos.y, str(health(xi, yi)), FHA_CENTER)
 			end if
 		next
 	next
