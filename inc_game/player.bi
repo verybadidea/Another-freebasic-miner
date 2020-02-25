@@ -10,6 +10,18 @@ const NUM_IMG_DRILL_SIDE = 2
 const NUM_IMG_DRILL_DOWN = 2
 const NUM_IMG_DRILL_UP = 2
 
+enum E_MINER_KEY
+	RKEY_NONE '0 = invalid key
+	RKEY_LEFT '1
+	RKEY_RIGHT '2
+	RKEY_UP '3
+	RKEY_DOWN '4
+	RKEY_PAGEUP '5
+	RKEY_PAGEDOWN '6
+	RKEY_SPACE '7
+	'RKEY_NULL '8 = list terminator
+end enum
+
 enum E_MINER_STATE
 	MINER_NONE '0
 	MINER_IDLE '1
@@ -25,7 +37,7 @@ enum E_MINER_STATE
 	MINER_DEAD '
 end enum
 
-enum E_TOOL
+enum E_MINER_TOOL
 	TOOL_LADDER '0
 	TOOl_PICK '1
 	TOOl_DRILL '2
@@ -47,7 +59,7 @@ type player_type
 	dim as flt2d posMap 'position in map / world [pixels]
 	dim as flt2d posScr 'position on screen [pixels]
 	private:
-	dim as multikey_type mkey
+	dim as registered_key rkey
 	dim as map_type ptr pMap_
 	dim as image_type ptr pImg 'current image to display
 	dim as int2d requestDir  = int2d(0, 0)
@@ -56,7 +68,8 @@ type player_type
 	dim as integer state, prevState
 	dim as integer health
 	dim as integer numLadders = 10
-	dim as integer selectedTool, actionTool
+	dim as integer selectedTool, actionTool 'remember when action timer has ended
+	dim as integer requestedAction
 	dim as float fallSpeed = 0 'pixels/s
 	dim as timer_type idleWaitTmr, actionTmr
 	dim as anim_type anim
@@ -75,7 +88,7 @@ type player_type
 	declare sub reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	declare sub processKeyInput()
 	declare sub processMouseInput()
-	declare sub act() 'perform action
+	declare sub tryAction()
 	declare sub update(dt as double) 'update state
 	declare sub updatePos(posChange as flt2d) 'update position
 	declare function tryWalk(xChangeReq as float, byref posChangeAct as flt2d) as integer
@@ -133,6 +146,14 @@ function player_type.init_() as integer
 		imgBufAll.image(ol_health_0 + i).copyTo(imgHealth(i))
 	next
 	anim.init(pImg) 'tell the anim class where the player image is
+	'assing keys
+	rkey.add(FB.SC_LEFT)
+	rkey.add(FB.SC_RIGHT)
+	rkey.add(FB.SC_UP)
+	rkey.add(FB.SC_DOWN)
+	rkey.add(FB.SC_PAGEDOWN)
+	rkey.add(FB.SC_PAGEUP)
+	rkey.add(FB.SC_SPACE)
 	return 0
 end function
 
@@ -145,47 +166,48 @@ sub player_type.reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	pImg = @imgWink(0)
 	health = MINER_MAX_HEALTH
 	selectedTool = TOOL_PICK
+	requestedAction = -1
 end sub
 
 sub player_type.processKeyInput()
 	'allow x and y state?
 	prevState = state
 	'walk left or stop
-	if mkey.down(FB.SC_LEFT) then
+	if rkey.isDown(RKEY_LEFT) then
 		state = MINER_WALK_LEFT 'request left
 		requestDir = int2d(-1, 0)
 	else
 		if prevState = MINER_WALK_LEFT then state = MINER_STAND_LEFT
 	end if
 	'walk right or stop
-	if mkey.down(FB.SC_RIGHT) then
+	if rkey.isDown(RKEY_RIGHT) then
 		state = MINER_WALK_RIGHT 'request right
 		requestDir = int2d(+1, 0)
 	else
 		if prevState = MINER_WALK_RIGHT then state = MINER_STAND_RIGHT
 	end if
 	'climb up or stop
-	if mkey.down(FB.SC_UP) then 'ymove request up
+	if rkey.isDown(RKEY_UP) then
 		state = MINER_CLIMB_UP 'request
 		requestDir = int2d(0, -1)
 	else
 		if prevState = MINER_CLIMB_UP then state = MINER_CLIMB_STOP
 	end if
 	'climb down or stop
-	if mkey.down(FB.SC_DOWN) then 'ymove request up
+	if rkey.isDown(RKEY_DOWN) then
 		state = MINER_CLIMB_DOWN 'request
 		requestDir = int2d(0, +1)
 	else
 		if prevState = MINER_CLIMB_DOWN then state = MINER_CLIMB_STOP
 	end if
-	if mkey.pressed(FB.SC_PAGEDOWN) then
+	if rkey.isPressed(RKEY_PAGEDOWN) then
 		'anim.stop_(@imgWink(0))
 		idleWaitTmr.start(5.0)
 		selectedTool += 1
 		if selectedTool >= TOOL_INVALID then selectedTool = 0 'first tool
 		'logger.add("Selected tool: " & selectedTool)
 	end if
-	if mkey.pressed(FB.SC_PAGEUP) then
+	if rkey.isPressed(RKEY_PAGEUP) then
 		'anim.stop_(@imgWink(0))
 		idleWaitTmr.start(5.0)
 		selectedTool -= 1
@@ -193,34 +215,54 @@ sub player_type.processKeyInput()
 		'logger.add("Selected tool: " & selectedTool)
 	end if
 	
-	'if mkey.pressed(FB.SC_SPACE) then
-	if mkey.down(FB.SC_SPACE) then
-		'anim.stop_(@imgWink(0))
+	if rkey.isPressed(RKEY_SPACE) then
+		requestedAction = selectedTool
+		'logger.add("start action")
 		idleWaitTmr.start(5.0)
-		if pMap_->validPos(targetGridPos) then
-			select case selectedTool
-			case TOOL_LADDER
-				if (pMap_->getBgProp(targetGridPos) and (IS_SOLID or IS_CLIMB)) = 0 then
-					if numLadders > 0 then
-						numLadders -= 1
-						dim as integer bgImgId = iif(targetGridPos.y = 0, -1, bg_shadow)
-						pMap_->setTile(targetGridPos, fg_construction_ladder, bgImgId, IS_CLIMB, 1)
-					end if
+	end if
+
+	if rkey.isReleased(RKEY_SPACE) then
+		requestedAction = -1
+		'logger.add("stop action")
+		idleWaitTmr.start(5.0)
+	end if
+
+	rkey.updateState() 'very important
+end sub
+
+sub player_type.processMouseInput()
+	'dim as mousetype mouse
+	'dim as integer mouseEvent
+	'mouseEvent = handleMouse(mouse)
+end sub
+
+sub player_type.tryAction() 'perform action
+	if pMap_->validPos(targetGridPos) then
+		select case requestedAction
+		case TOOL_LADDER
+			if (pMap_->getBgProp(targetGridPos) and (IS_SOLID or IS_CLIMB)) = 0 then
+				if numLadders > 0 then
+					numLadders -= 1
+					dim as integer bgImgId = iif(targetGridPos.y = 0, -1, bg_shadow)
+					pMap_->setTile(targetGridPos, fg_construction_ladder, bgImgId, IS_CLIMB, 1)
 				end if
-			case TOOL_PICK
-				if requestDir.y = 0 then 'left or right only, not up or down
-					if actionTmr.isActive = false then
-						if (pMap_->getBgProp(targetGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
-							dim as integer pickDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
-							anim.start(@imgPick(pickDir, 0), NUM_IMG_PICK, 1, 0.15)
-							actionTmr.start(0.30) '2 * 0.15
-							actionGridPos = targetGridPos
-							actionTool = selectedTool
-						end if
-					end if
-				end if
-			case TOOL_DRILL
+			end if
+		case TOOL_PICK
+			if requestDir.y = 0 then 'left or right only, not up or down
 				if actionTmr.isActive = false then
+					if (pMap_->getBgProp(targetGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
+						dim as integer pickDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
+						anim.start(@imgPick(pickDir, 0), NUM_IMG_PICK, 1, 0.15)
+						actionTmr.start(0.30) '2 * 0.15
+						actionGridPos = targetGridPos
+						actionTool = requestedAction
+					end if
+				end if
+			end if
+		case TOOL_DRILL
+			if actionTmr.isActive = false then
+				select case state
+				case MINER_IDLE, MINER_STAND_LEFT, MINER_STAND_RIGHT
 					if (pMap_->getBgProp(targetGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
 						select case requestDir.y
 						case 0 'left or right
@@ -235,22 +277,16 @@ sub player_type.processKeyInput()
 							actionTmr.start(0.20) '2 * 0.10
 						end select
 						actionGridPos = targetGridPos
-						actionTool = selectedTool
+						actionTool = requestedAction
 					end if
-				end if
-			end select
-		end if
+				case else
+					'no drilling while climbing, falling or walking
+				end select
+			end if
+		case else
+			'logger.add("Invalid action")
+		end select
 	end if
-end sub
-
-sub player_type.processMouseInput()
-	'dim as mousetype mouse
-	'dim as integer mouseEvent
-	'mouseEvent = handleMouse(mouse)
-end sub
-
-sub player_type.act() 'perform action
-	
 end sub
 
 'update position & state
@@ -280,6 +316,8 @@ sub player_type.update(dt as double)
 		end if
 	end select
 
+	tryAction()
+
 	'pick axe action done
 	if actionTmr.ended() then
 		dim as integer bgImgId = iif(targetGridPos.y = 0, -1, bg_shadow)
@@ -287,12 +325,13 @@ sub player_type.update(dt as double)
 		pMap_->health(actionGridPos.x, actionGridPos.y) -= 1
 		if pMap_->health(actionGridPos.x, actionGridPos.y) <= 0 then
 			pMap_->setTile(actionGridPos, 0, bgImgId, IS_EMPTY)
+			requestedAction = -1
 		end if
 		dim as integer standDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
 		anim.stop_(@imgWalk(standDir, 0))
 	end if
 
-	select case state 'needs to be after previuos select case
+	select case state 'needs to be after previous select case
 	case MINER_CLIMB_UP, MINER_CLIMB_DOWN, MINER_CLIMB_STOP
 		'no falling when on ladder
 	case else
@@ -376,7 +415,7 @@ function player_type.tryWalk(xChangeReq as float, byref posChangeAct as flt2d) a
 		dim as float xPosChangeFeet = (targetGridPosfeet.x * GRID_SIZE_X + tileEgdeOffset) - (posMap.x + playerEdgeOffset)
 		posChangeAct.x = iif(abs(xPosChangeHead) < abs(xPosChangeFeet), xPosChangeHead, xPosChangeFeet) '-5 > -3 ? no, ret -3
 		newState = iif(xChangeReq < 0, MINER_STAND_LEFT, MINER_STAND_RIGHT)
-		logger.add("cannot walk there, something in the way")
+		'logger.add("cannot walk there, something in the way")
 	else
 		posChangeAct.x = xChangeReq
 	end if
@@ -396,7 +435,7 @@ function player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d) 
 			'check target position
 			dim as int2d targetGridPos = getGridPosXY(posMap.x, posMap.y + playerEdgeOffset + yChangeReq)
 			if (pMap_->getBgProp(targetGridPos) and IS_CLIMB) = 0 then
-				logger.add("cannot climb, end of ladder")
+				'logger.add("cannot climb, end of ladder")
 				posChangeAct.y = (targetGridPos.y * GRID_SIZE_Y + tileEgdeOffset) - (posMap.y + playerEdgeOffset)
 				newState = MINER_CLIMB_STOP
 				'newState = iif(yChangeReq < 0, MINER_CLIMB_STOP, MINER_IDLE) '+y = down
@@ -408,11 +447,11 @@ function player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d) 
 				 posChangeAct.x = (targetGridPos.x * GRID_SIZE_X) - posMap.x
 			end if
 		else
-			logger.add("cannot climb, too far from ladder")
+			'logger.add("cannot climb, too far from ladder")
 			newState = MINER_IDLE
 		end if
 	else
-		logger.add("cannot climb, no ladder at current tile")
+		'logger.add("cannot climb, no ladder at current tile")
 		newState = MINER_IDLE
 	end if
 	return newState

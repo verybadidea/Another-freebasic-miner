@@ -42,32 +42,32 @@ end sub
 
 #include once "fbgfx.bi"
 
-'Class for extended multikey functionality
-type multikey_type
-	private:
-		m_oldKey(127) as boolean
-		m_newKey(127) as boolean
-	public:
-		declare function down(byval as long) as boolean
-		declare function pressed(byval as long) as boolean
-		declare function released(byval as long) as boolean
-end type
+'~ 'Class for extended multikey functionality
+'~ type multikey_type
+	'~ private:
+		'~ m_oldKey(127) as boolean
+		'~ m_newKey(127) as boolean
+	'~ public:
+		'~ declare function down(byval as long) as boolean
+		'~ declare function pressed(byval as long) as boolean
+		'~ declare function released(byval as long) as boolean
+'~ end type
 
-'Returns whether a key is being held
-function multikey_type.down(byval index as long) as boolean
-	return cbool(multiKey(index))
-end function
+'~ 'Returns whether a key is being held
+'~ function multikey_type.down(byval index as long) as boolean
+	'~ return cbool(multiKey(index))
+'~ end function
 
-'Returns whether a key was pressed
-function multikey_type.pressed(byval index as long) as boolean
-	m_oldKey(index) = m_newKey(index)
-	m_newKey(index) = cbool(multiKey(index))
-	return (m_oldKey(index) = false) andalso (m_newKey(index) = true)
-end function
+'~ 'Returns whether a key was pressed
+'~ function multikey_type.pressed(byval index as long) as boolean
+	'~ m_oldKey(index) = m_newKey(index)
+	'~ m_newKey(index) = cbool(multiKey(index))
+	'~ return (m_oldKey(index) = false) andalso (m_newKey(index) = true)
+'~ end function
 
-'Returns whether a key was released
-function multikey_type.released(byval index as long) as boolean
-	m_oldKey(index) = m_newKey(index)
-	m_newKey(index) = cbool(multiKey(index))
-	return (m_oldKey(index) = true) andalso (m_newKey(index) = false)
-end function
+'~ 'Returns whether a key was released
+'~ function multikey_type.released(byval index as long) as boolean
+	'~ m_oldKey(index) = m_newKey(index)
+	'~ m_newKey(index) = cbool(multiKey(index))
+	'~ return (m_oldKey(index) = true) andalso (m_newKey(index) = false)
+'~ end function

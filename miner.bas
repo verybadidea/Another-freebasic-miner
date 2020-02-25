@@ -2,6 +2,7 @@
 
 #include once "inc_lib/screen_v03.bi"
 #include once "inc_lib/keyboard_v01.bi"
+#include once "inc_lib/registered_key_02.bi"
 #include once "inc_lib/image_v03.bi"
 #include once "inc_lib/image_buffer_v03.bi"
 #include once "inc_lib/string_func_v01.bi"

@@ -12,8 +12,7 @@ Control keys:
 
 Todo:
 
-* Check player fall when block removed below player
-* Do not allow drilling on when ladder
+* store & update gridPos of player, no need to calculate at several location?
 * Improve draw tool indicator code
 * Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
 * Container / class for player images?
@@ -65,6 +64,8 @@ Don't:
 
 Done:
 
+* 25-02-2020: No drilling on ladder allowed
+* 25-02-2020: Switched from ext_multikey to registered_key
 * 22-02-2020: break stuff animation sprites on tiles
 * 22-02-2020: Block health (damage) added
 * 22-02-2020: pick axe animation
@@ -103,8 +104,9 @@ Done:
 	git status
 	git commit -m 'message'
 	git push origin master
+	git status
 	https://minecraft.gamepedia.com/Controls
 
-long pause
+no long pause
 start with something simple each day
 don't worry to much about the design, implement first then improve
