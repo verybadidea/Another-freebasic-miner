@@ -4,6 +4,7 @@ const as short IS_FIXED = &h0002
 const as short IS_SOLID = &h0004
 const as short IS_CLIMB = &h0008
 const as short IS_FLOWER = &h0010
+const as short IS_RESOURCE = &h0020
 const as short IS_INVALID = &h8000
 'const as short IS_SUPPORT = &h0008
 'const as short IS_INVALID = &h8000
@@ -17,11 +18,14 @@ type map_type
 	dim as short bgId(any, any)
 	dim as short fgId(any, any)
 	dim as short bgProp(any, any)
-	'move this plant stuff elsewehere?
-	dim as timer_type plantAnimTmr
-	dim as integer plantAnimSeq 'index for plantAnimFrame()
-	dim as double plantAnimDuration = 0.2
-	dim as integer plantAnimFrame(0 to 3) = {0, 1, 2, 1}
+	'move this flower stuff elsewehere?
+	dim as timer_type flowerSpawnTmr
+	dim as double flowerSpawnTime = 5.0
+	'move this flower stuff elsewehere?
+	dim as timer_type flowerAnimTmr
+	dim as integer flowerAnimSeq 'index for flowerAnimFrame()
+	dim as double flowerAnimDuration = 0.2
+	dim as integer flowerAnimFrame(0 to 3) = {0, 1, 2, 1}
 	public:
 	declare function alloc(size as int2d) as integer
 	declare sub setRandomImages()
@@ -30,6 +34,8 @@ type map_type
 	declare function getBgProp(gridPos as int2d) as short
 	declare sub setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0, health_ as short = -1)
 	declare sub draw_(scrMapDist as flt2d)
+	declare sub update() 'update flowers
+	declare sub killFlower(pos_ as int2d)
 	declare destructor()
 end type
 
@@ -39,8 +45,9 @@ function map_type.alloc(size as int2d) as integer
 	redim fgId(size.x, size.y)
 	redim bgProp(size.x, size.y)
 	redim health(size.x, size.y)
-	plantAnimSeq = 0
-	plantAnimTmr.start(plantAnimDuration)
+	flowerAnimSeq = 0
+	flowerAnimTmr.start(flowerAnimDuration)
+	flowerSpawnTmr.start(flowerSpawnTime)
 	return 0
 end function
 
@@ -89,12 +96,6 @@ end sub
 
 'Id = 0: do not draw
 sub map_type.draw_(scrMapDist as flt2d)
-	'move this to map.update() later
-	if plantAnimTmr.ended() then
-		plantAnimSeq += 1
-		if plantAnimSeq > ubound(plantAnimFrame) then plantAnimSeq = plantAnimFrame(0)
-		plantAnimTmr.start(plantAnimDuration)
-	end if
 	'get visible area (Tl = Top-Left, Br = Botton-Right)
 	dim as int2d gridPosLt = getGridPos(scrMapDist)
 	dim as int2d gridPosBr = getGridPos(scrMapDist + toFlt2d(scr.edge))
@@ -109,7 +110,7 @@ sub map_type.draw_(scrMapDist as flt2d)
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_PSET)
 				end if
 				'draw foreground tiles, flowers / grass animated
-				imgId = fgId(xi, yi) + iif((bgProp(xi, yi) and IS_FLOWER), plantAnimFrame(plantAnimSeq), 0)
+				imgId = fgId(xi, yi) + iif((bgProp(xi, yi) and IS_FLOWER), flowerAnimFrame(flowerAnimSeq), 0)
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 				end if
@@ -127,6 +128,42 @@ sub map_type.draw_(scrMapDist as flt2d)
 			end if
 		next
 	next
+end sub
+
+'move to different class?
+sub map_type.update() 'update flowers
+	'flower animation
+	if flowerAnimTmr.ended() then
+		flowerAnimTmr.start(flowerAnimDuration)
+		flowerAnimSeq += 1
+		if flowerAnimSeq > ubound(flowerAnimFrame) then flowerAnimSeq = flowerAnimFrame(0)
+	end if
+	'flower spawing
+	if flowerSpawnTmr.ended() then
+		flowerSpawnTmr.start(flowerSpawnTime)
+		dim as integer xi, yi = 0 'top row
+		for i as integer = 0 to 4 'try 5 positions
+			xi = rndRange(0, size.x - 1)
+			if (getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
+				if (getBgProp(int2d(xi, yi)) and IS_EMPTY) then
+					dim as integer imgId = flowerArray(rndChoice(flowerArray()))
+					setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
+					exit for
+				end if
+			end if
+		next
+	end if
+end sub
+
+'realy?
+sub map_type.killFlower(pos_ as int2d)
+	if validPos(pos_) then
+		if (getBgProp(pos_) and IS_FLOWER) then
+			setTile(pos_, 0, -1, IS_EMPTY) 'bgProp)
+			'reset to prevent accidental direct re-spawn
+			flowerSpawnTmr.start(flowerSpawnTime)
+		end if
+	end if
 end sub
 
 destructor map_type()

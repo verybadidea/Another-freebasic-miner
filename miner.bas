@@ -26,7 +26,7 @@
 #define flt2d dbl2d
 #define toFlt2d toDbl2d
 
-const SLEEP_MS = 1 'default 1 (max FPS), higher values for testing, e.g 15 (~60Hz), or 50 (~20Hz)
+const SLEEP_MS = 1 'default 1 (max FPS), higher values for testing, e.g 15 (~60Hz), or 30 (~30Hz)
 const GRID_SIZE_X = 64, GRID_HALF_X = GRID_SIZE_X \ 2
 const GRID_SIZE_Y = 64, GRID_HALF_Y = GRID_SIZE_Y \ 2
 const as float GRAVITY = 1000 'pixels/s^2
@@ -38,6 +38,14 @@ dim shared as font_type f1
 dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 
 #include once "inc_game/image_enum.bi"
+
+dim shared as integer flowerArray(...) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
+	fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
+
+dim shared as integer resourceArray(...) = {fg_resource_cole, fg_resource_gold, _
+	fg_resource_iron, fg_resource_lazurite, fg_resource_platin, fg_resource_ruby, _
+	fg_resource_salt, fg_resource_sapphire, fg_resource_silver, fg_resource_uranium}
+
 #include once "inc_game/grid.bi"
 #include once "inc_game/map.bi"
 #include once "inc_game/anim.bi"
@@ -125,7 +133,7 @@ function main() as string
 						'random gaps
 						map.setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY, 0)
 					end if
-					if rnd < 0.4 then
+					if rnd < 0.2 then
 					'random ladder
 						map.setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
 					end if
@@ -133,18 +141,29 @@ function main() as string
 			end if
 		next
 	next
-	'place plants & grass
-	dim as integer plantsArray(...) = _
-		{fg_landscape_flower_1a, fg_landscape_flower_2a, fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
+	'place plants & grass at top row
+	dim as integer yi = 0
 	for xi as integer = 0 to map.size.x - 1
-		if map.getBgProp(int2d(xi, 1)) and IS_SOLID then
-			if (map.getBgProp(int2d(xi, 0)) and IS_SOLID) = 0 then
-				dim as integer imageIndex = plantsArray(rndChoice(plantsArray()))
-				map.setTile(int2d(xi, 0), imageIndex, 0, IS_FLOWER, 1)
+		'check block below
+		if (map.getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
+			if (map.getBgProp(int2d(xi, yi)) and IS_EMPTY) then
+				if rnd > 0.5 then continue for
+				dim as integer imgId = flowerArray(rndChoice(flowerArray()))
+				map.setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
 			end if
 		end if
 	next
-
+	'place resources
+	for yi as integer = 2 to map.size.y - 1
+		for xi as integer = 0 to map.size.x - 1
+			if map.getBgProp(int2d(xi, yi)) = IS_SOLID then
+				if rnd > 0.3 then continue for
+				dim as integer imgId = resourceArray(rndChoice(resourceArray()))
+				map.setTile(int2d(xi, yi), imgId, -1, IS_SOLID or IS_RESOURCE)
+			end if
+		next
+	next
+	
 	dim as integer result = miner.init_()
 	if result <> 0 then return "miner.init: " & result
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
@@ -166,6 +185,7 @@ function main() as string
 		end select
 		
 		miner.update(loopTimer.getdt())
+		map.update()
 
 		screenlock
 		

@@ -12,31 +12,37 @@ Control keys:
 
 Todo:
 
-* store & update gridPos of player, no need to calculate at several location?
-* Improve draw tool indicator code
-* Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
-* Container / class for player images?
-* Drill is faster, but no resource?
-* separate keys for build & destroy
-* Auto update destroy indicator? pick, drill, shovel, ... No?
+* Added resources to map, height depedendent distribution
+* Collect a resource, show resource object ball -> items list? can drop as well?
+* Drill is faster, but no resource
+* shovel action, reuired for flower removal?
 * Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
+* Make unsupported ladders and flowers drop?
+* Improve draw tool indicator code
+* Change of player class stores images, less variabes
+* Container / class for player images?
+* separate keys for build & destroy
+* Use <tab> to switch between build and destroy?
+* Use mousewheel to change tool / build selection?
+* Auto update destroy indicator? pick, drill, shovel, ... No?
 * change from damage to health, init, remove public
-* Freeze mizer during action
+* Freeze miner during action?
 * Block movement during action, e.g. pick axe. Or stop action on move. State Busy?
 * reset idle on any key press (e.g. escape)' and start action anim
-* draw square centered ?
-* plant supporting block removed? remove plant
-* add grass to all top blocks?
+* draw square centered? What?
+* add grass to all top blocks? (grass dirt block, not grass flower)
 * invertory
+* Show bagpack with number of items
 * use player size struct, AABB? note: height not centered with tile
 * fix size of images? 66x66 ?
+* Add screenshot to wiki
 * build stuff
 * Display player red on getting damaged
-* shovel action
 * make map shared?
 * map load/save
 * map editor
 * add sound
+* Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
 * Change anim.start(), supply array instead of first image + numImages
 * Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
 * clean up image.bi : alignment struct -> single center flag, vert/horz combined
@@ -64,13 +70,19 @@ Don't:
 
 Done:
 
+* 01-03-2020: Flower spawning timer and map.killFlower() added
+* 01-03-2020: frame time constants added in player class
+* 29-02-2020: resourceArray added
+* 28-02-2020: remove plant / flower when supporting block removed
+* 28-02-2020: property targetGridPos renamed to markerGridPos
+* 28-02-2020: currentGridPos now property of player class
 * 25-02-2020: No drilling on ladder allowed
 * 25-02-2020: Switched from ext_multikey to registered_key
 * 22-02-2020: break stuff animation sprites on tiles
 * 22-02-2020: Block health (damage) added
 * 22-02-2020: pick axe animation
 * 17-02-2020: plants, flowers, Animate all plants synchrone
-* 17-02-2020: use in map image index for Bg,Fg instead of poninters?
+* 17-02-2020: use in map image index for Bg, Fg instead of poninters?
 * 16-02-2020: load all images into 1 array, change enum
 * animation class
 * start fall speed + incremental fall speed + max fall speed?
