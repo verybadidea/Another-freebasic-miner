@@ -1,5 +1,3 @@
-const DIR_LEFT = 0, DIR_RIGHT = 1
-
 const NUM_IMG_WALK = 4
 const NUM_IMG_WINK = 4
 const NUM_IMG_CLIMB = 4
@@ -116,8 +114,8 @@ function player_type.init_() as integer
 	next
 	for i as integer = 0 to NUM_IMG_WALK - 1
 		if imgBufAll.validImage(act_walk_1 + i) = false then return -2
-		imgBufAll.image(act_walk_1 + i).copyTo(imgWalk(DIR_LEFT, i))
-		imgBufAll.image(act_walk_1 + i).hFlipTo(imgWalk(DIR_RIGHT, i))
+		imgBufAll.image(act_walk_1 + i).copyTo(imgWalk(DIR_LE, i))
+		imgBufAll.image(act_walk_1 + i).hFlipTo(imgWalk(DIR_RI, i))
 	next
 	for i as integer = 0 to NUM_IMG_CLIMB - 1
 		if imgBufAll.validImage(act_climb_1 + i) = false then return -3
@@ -129,14 +127,14 @@ function player_type.init_() as integer
 	next
 	for i as integer = 0 to NUM_IMG_PICK - 1
 		if imgBufAll.validImage(act_pick_1 + i) = false then return -5
-		imgBufAll.image(act_pick_1 + i).copyTo(imgPick(DIR_LEFT, i))
-		imgBufAll.image(act_pick_1 + i).hFlipTo(imgPick(DIR_RIGHT, i))
+		imgBufAll.image(act_pick_1 + i).copyTo(imgPick(DIR_LE, i))
+		imgBufAll.image(act_pick_1 + i).hFlipTo(imgPick(DIR_RI, i))
 	next
 
 	for i as integer = 0 to NUM_IMG_DRILL_SIDE - 1
 		if imgBufAll.validImage(act_drill_1 + i) = false then return -6
-		imgBufAll.image(act_drill_1 + i).copyTo(imgDrillSide(DIR_LEFT, i))
-		imgBufAll.image(act_drill_1 + i).hFlipTo(imgDrillSide(DIR_RIGHT, i))
+		imgBufAll.image(act_drill_1 + i).copyTo(imgDrillSide(DIR_LE, i))
+		imgBufAll.image(act_drill_1 + i).hFlipTo(imgDrillSide(DIR_RI, i))
 	next
 	for i as integer = 0 to NUM_IMG_DRILL_DOWN - 1
 		if imgBufAll.validImage(act_drill_down_1 + i) = false then return -6
@@ -263,7 +261,7 @@ sub player_type.tryAction() 'perform action
 			if requestDir.y = 0 then 'left or right only, not up or down
 				if actionTmr.isActive = false then
 					if (pMap_->getBgProp(markerGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
-						dim as integer pickDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
+						dim as integer pickDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
 						anim.start(@imgPick(pickDir, 0), NUM_IMG_PICK, 1, FRAME_TIME_PICK)
 						actionTmr.start(NUM_IMG_PICK * FRAME_TIME_PICK) '2 * 0.15
 						actionGridPos = markerGridPos
@@ -278,7 +276,7 @@ sub player_type.tryAction() 'perform action
 					if (pMap_->getBgProp(markerGridPos) and (IS_EMPTY or IS_FIXED)) = 0 then
 						select case requestDir.y
 						case 0 'left or right
-							dim as integer drillDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
+							dim as integer drillDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
 							anim.start(@imgDrillSide(drillDir, 0), NUM_IMG_DRILL_SIDE, 1, FRAME_TIME_DRILL)
 							actionTmr.start(NUM_IMG_DRILL_SIDE * FRAME_TIME_DRILL) '2 * 0.10
 						case -1 'up
@@ -355,14 +353,14 @@ sub player_type.update(dt as double)
 			anim.stop_(@imgWink(0))
 			idleWaitTmr.start(5.0)
 		case MINER_WALK_LEFT
-			anim.start(@imgWalk(DIR_LEFT, 0), NUM_IMG_WALK, -1, FRAME_TIME_WALK)
+			anim.start(@imgWalk(DIR_LE, 0), NUM_IMG_WALK, -1, FRAME_TIME_WALK)
 		case MINER_WALK_RIGHT
-			anim.start(@imgWalk(DIR_RIGHT, 0), NUM_IMG_WALK, -1, FRAME_TIME_WALK)
+			anim.start(@imgWalk(DIR_RI, 0), NUM_IMG_WALK, -1, FRAME_TIME_WALK)
 		case MINER_STAND_LEFT
-			anim.stop_(@imgWalk(DIR_LEFT, 0))
+			anim.stop_(@imgWalk(DIR_LE, 0))
 			idleWaitTmr.start(5.0) 
 		case MINER_STAND_RIGHT
-			anim.stop_(@imgWalk(DIR_RIGHT, 0))
+			anim.stop_(@imgWalk(DIR_RI, 0))
 			idleWaitTmr.start(5.0) 
 		case MINER_CLIMB_UP
 			anim.start(@imgClimb(0), NUM_IMG_CLIMB, -1, FRAME_TIME_CLIMB)
@@ -418,7 +416,7 @@ sub player_type.updateAction()
 			'check flower above & remove
 			pMap_->killFlower(actionGridPos + int2d(0, -1))
 		end if
-		dim as integer standDir = iif(requestDir.x < 0, DIR_LEFT, DIR_RIGHT)
+		dim as integer standDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
 		anim.stop_(@imgWalk(standDir, 0))
 	end if
 end sub

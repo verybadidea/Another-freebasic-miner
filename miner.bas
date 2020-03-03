@@ -46,10 +46,12 @@ dim shared as integer resourceArray(...) = {fg_resource_cole, fg_resource_gold, 
 	fg_resource_iron, fg_resource_lazurite, fg_resource_platin, fg_resource_ruby, _
 	fg_resource_salt, fg_resource_sapphire, fg_resource_silver, fg_resource_uranium}
 
+#include once "inc_game/directions.bi"
 #include once "inc_game/grid.bi"
 #include once "inc_game/map.bi"
 #include once "inc_game/anim.bi"
 #include once "inc_game/player.bi"
+#include once "inc_game/viewer.bi"
 
 '-------------------------------------------------------------------------------
 
@@ -80,6 +82,7 @@ end
 
 enum E_INPUT_STATE
 	INPUT_PLAYER
+	INPUT_VIEW_MODE
 	INPUT_PAUSE_MENU
 end enum
 
@@ -92,7 +95,9 @@ end function
 
 function main() as string
 	dim as player_type miner
-	dim as E_INPUT_STATE inputState = INPUT_PLAYER
+	dim as viewer_type viewer
+	dim as E_INPUT_STATE inputState = INPUT_PLAYER 'INPUT_VIEW_MODE 
+	dim as flt2d viewPosTl 'top-left
 
 	dim as integer numLoaded = 0
 	dim as string dirName
@@ -105,69 +110,17 @@ function main() as string
 	logger.add("Total images loaded: " & imgBufAll.numImages)
 
 	dim as map_type map
-	map.alloc(int2d(20, 20))
-	'map.setRandomImages()
-
-	'setup a simple ramdom map
-	for yi as integer = 0 to map.size.y - 1
-		for xi as integer = 0 to map.size.x - 1
-			if (xi = 0) or (xi = map.size.x - 1) then
-				'set left/right hard borders
-				map.setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
-			else
-				if yi = 0 then
-					'no bg image on top row
-					map.setTile(int2d(xi, yi), 0, 0, IS_EMPTY)
-				elseif yi = map.size.y - 1 then
-					'set left/right bottom border
-					map.setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
-				else 
-					if yi = 1 then
-						'second row grass covered dirt block
-						map.setTile(int2d(xi, yi), 0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID, 5)
-					else
-						'normal dirt blocks
-						map.setTile(int2d(xi, yi), 0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID, 5)
-					end if
-					if rnd < 0.2 then
-						'random gaps
-						map.setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY, 0)
-					end if
-					if rnd < 0.2 then
-					'random ladder
-						map.setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
-					end if
-				end if
-			end if
-		next
-	next
-	'place plants & grass at top row
-	dim as integer yi = 0
-	for xi as integer = 0 to map.size.x - 1
-		'check block below
-		if (map.getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
-			if (map.getBgProp(int2d(xi, yi)) and IS_EMPTY) then
-				if rnd > 0.5 then continue for
-				dim as integer imgId = flowerArray(rndChoice(flowerArray()))
-				map.setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
-			end if
-		end if
-	next
-	'place resources
-	for yi as integer = 2 to map.size.y - 1
-		for xi as integer = 0 to map.size.x - 1
-			if map.getBgProp(int2d(xi, yi)) = IS_SOLID then
-				if rnd > 0.3 then continue for
-				dim as integer imgId = resourceArray(rndChoice(resourceArray()))
-				map.setTile(int2d(xi, yi), imgId, -1, IS_SOLID or IS_RESOURCE)
-			end if
-		next
-	next
+	map.alloc(int2d(300, 100))
+	'map.setRandom()
+	map.setNormal()
 	
 	dim as integer result = miner.init_()
 	if result <> 0 then return "miner.init: " & result
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
 	miner.reset_(map, posMap, scr.cntr)
+
+	viewer.init_()
+	viewer.reset_(posMap)
 
 	dim as loop_timer_type loopTimer
 	dim as integer quit = 0
@@ -181,16 +134,27 @@ function main() as string
 		select case inputState
 		case INPUT_PLAYER
 			miner.processKeyInput()
+		case INPUT_VIEW_MODE
+			viewer.processKeyInput()
 		case else
 		end select
 		
 		miner.update(loopTimer.getdt())
+		viewer.update(loopTimer.getdt())
 		map.update()
+
+		select case inputState
+		case INPUT_PLAYER
+			viewPosTl = miner.posMap - miner.posScr
+		case INPUT_VIEW_MODE
+			viewPosTl = viewer.posMap
+		case else
+		end select
 
 		screenlock
 		
 		scr.clearScreen(rgba(0, 0, 0, 255))
-		map.draw_(miner.posMap - miner.posScr)
+		map.draw_(viewPosTl)
 		'locate 2,2: print loopTimer.getRunTime()
 		'in-game logger
 		line(0, scr.size.y - 1)-step(scr.size.x - 1, -logger.numEntries * 16), rgba(0, 0, 0, 127), bf

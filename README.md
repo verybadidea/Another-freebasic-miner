@@ -12,7 +12,12 @@ Control keys:
 
 Todo:
 
+* Generate Caves
+* Rock layers
 * Added resources to map, height depedendent distribution
+* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
+* Do not move on ladder when standing and pressing down (for drilling)
+* Random walk with direction preference?
 * Collect a resource, show resource object ball -> items list? can drop as well?
 * Drill is faster, but no resource
 * shovel action, reuired for flower removal?
@@ -70,6 +75,9 @@ Don't:
 
 Done:
 
+* 03-03-2020: Minneral / resource veins added
+* 03-03-2020: Map creation stuff moved to map class
+* 02-03-2020: Map view mode added
 * 01-03-2020: Flower spawning timer and map.killFlower() added
 * 01-03-2020: frame time constants added in player class
 * 29-02-2020: resourceArray added

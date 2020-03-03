@@ -28,7 +28,8 @@ type map_type
 	dim as integer flowerAnimFrame(0 to 3) = {0, 1, 2, 1}
 	public:
 	declare function alloc(size as int2d) as integer
-	declare sub setRandomImages()
+	declare sub setRandom()
+	declare sub setNormal()
 	declare function validIndex(x as integer, y as integer) as boolean
 	declare function validPos(pos_ as int2d) as boolean
 	declare function getBgProp(gridPos as int2d) as short
@@ -51,13 +52,102 @@ function map_type.alloc(size as int2d) as integer
 	return 0
 end function
 
-sub map_type.setRandomImages()
+sub map_type.setRandom()
 	for yi as integer = 0 to size.y - 1
 		for xi as integer = 0 to size.x - 1
 			bgId(xi, yi) = rndRange(bg_block_2a, bg_wall_5)
 			fgId(xi, yi) = rndRange(fg_artefact_bone_1, fg_tile_deco_2)
 			bgProp(size.x, size.y) = IS_EMPTY
 			health(size.x, size.y) = 1
+		next
+	next
+end sub
+
+sub map_type.setNormal()
+	'setup a simple random map
+	for yi as integer = 0 to size.y - 1
+		for xi as integer = 0 to size.x - 1
+			if (xi = 0) or (xi = size.x - 1) then
+				'set left/right hard borders
+				setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
+			else
+				if yi = 0 then
+					'no bg image on top row
+					setTile(int2d(xi, yi), 0, 0, IS_EMPTY)
+				elseif yi = size.y - 1 then
+					'set left/right bottom border
+					setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
+				else 
+					if yi = 1 then
+						'second row grass covered dirt block
+						setTile(int2d(xi, yi), 0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID, 5)
+					else
+						'normal dirt blocks
+						setTile(int2d(xi, yi), 0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID, 5)
+					end if
+					'~ if rnd < 0.2 then
+						'~ 'random gaps
+						'~ setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY, 0)
+					'~ end if
+					'~ if rnd < 0.2 then
+					'~ 'random ladder
+						'~ setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
+					'~ end if
+				end if
+			end if
+		next
+	next
+	'place plants & grass at top row
+	dim as integer yi = 0
+	for xi as integer = 0 to size.x - 1
+		'check block below
+		if (getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
+			if (getBgProp(int2d(xi, yi)) and IS_EMPTY) then
+				if rnd > 0.5 then continue for
+				dim as integer imgId = flowerArray(rndChoice(flowerArray()))
+				setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
+			end if
+		end if
+	next
+	'place resources
+	'~ for yi as integer = 2 to size.y - 1
+		'~ for xi as integer = 0 to size.x - 1
+			'~ if getBgProp(int2d(xi, yi)) = IS_SOLID then
+				'~ if rnd > 0.3 then continue for
+				'~ dim as integer imgId = resourceArray(rndChoice(resourceArray()))
+				'~ setTile(int2d(xi, yi), imgId, -1, IS_SOLID or IS_RESOURCE)
+			'~ end if
+		'~ next
+	'~ next
+	'create resource / minera veins
+	dim as move_def_type move
+	dim as int2d blockPos
+	dim as integer badMove, iMove, imgId
+	dim as integer numVeins = 300, maxVeinLen
+	for iVein as integer = 0 to numVeins - 1
+		'random start position (within borders)
+		blockPos.x = rndRange(1, size.x - 2)
+		blockPos.y = rndRange(2, size.y - 2)
+		'disallow one direction
+		badMove = rndRange(0, 3)
+		'random resource (for now, make heigt dependent)
+		imgId = resourceArray(rndChoice(resourceArray()))
+		maxVeinLen = rndRange(10, 20)
+		for iBlock as integer = 0 to maxVeinLen - 1
+			'if validPos(blockPos) then
+			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
+				'set the resource on map
+				if getBgProp(blockPos) = IS_SOLID then
+					setTile(blockPos, imgId, -1, IS_SOLID or IS_RESOURCE)
+				end if
+			else
+				continue for 'next vein
+			end if
+			'make a step in random (allowed) direction
+			do
+				iMove = rndRange(0, 3)
+			loop while iMove = badMove
+			blockPos += move.dir_(iMove)
 		next
 	next
 end sub
