@@ -39,10 +39,10 @@ dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 
 #include once "inc_game/image_enum.bi"
 
-dim shared as integer flowerArray(...) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
+dim shared as integer flowerArray(0 to 4) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
 	fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
 
-dim shared as integer resourceArray(...) = {fg_resource_cole, fg_resource_gold, _
+dim shared as integer resourceArray(0 to 9) = {fg_resource_cole, fg_resource_gold, _
 	fg_resource_iron, fg_resource_lazurite, fg_resource_platin, fg_resource_ruby, _
 	fg_resource_salt, fg_resource_sapphire, fg_resource_silver, fg_resource_uranium}
 

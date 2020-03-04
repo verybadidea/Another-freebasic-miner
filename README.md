@@ -12,6 +12,7 @@ Control keys:
 
 Todo:
 
+* Block movement / changing marker pos during action (e.g drilling)
 * Generate Caves
 * Rock layers
 * Added resources to map, height depedendent distribution
