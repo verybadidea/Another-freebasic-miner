@@ -32,20 +32,12 @@ const GRID_SIZE_Y = 64, GRID_HALF_Y = GRID_SIZE_Y \ 2
 const as float GRAVITY = 1000 'pixels/s^2
 
 dim shared as screen_type scr = screen_type(800, 600, fb.GFX_ALPHA_PRIMITIVES) '1024, 768
-dim shared as int2d screenBorder = scr.size \ 3 'pixels
+dim shared as int2d screenBorder = scr.size \ 3 'pixels, move to player class?
 dim shared as image_buffer_type imgBufAll
 dim shared as font_type f1
 dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 
 #include once "inc_game/image_enum.bi"
-
-dim shared as integer flowerArray(0 to 4) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
-	fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
-
-dim shared as integer resourceArray(0 to 9) = {fg_resource_cole, fg_resource_gold, _
-	fg_resource_iron, fg_resource_lazurite, fg_resource_platin, fg_resource_ruby, _
-	fg_resource_salt, fg_resource_sapphire, fg_resource_silver, fg_resource_uranium}
-
 #include once "inc_game/directions.bi"
 #include once "inc_game/grid.bi"
 #include once "inc_game/map.bi"
@@ -96,7 +88,7 @@ end function
 function main() as string
 	dim as player_type miner
 	dim as viewer_type viewer
-	dim as E_INPUT_STATE inputState = INPUT_PLAYER 'INPUT_VIEW_MODE 
+	dim as E_INPUT_STATE inputState = INPUT_PLAYER 'INPUT_VIEW_MODE
 	dim as flt2d viewPosTl 'top-left
 
 	dim as integer numLoaded = 0

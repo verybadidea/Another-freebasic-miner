@@ -10,6 +10,9 @@ const as short IS_INVALID = &h8000
 'const as short IS_INVALID = &h8000
 'const as short ALLOW_LADDER
 
+const NUM_VEINS = 500, MIN_VEIN_LEN = 10, MAX_VEIN_LEN = 20
+const NUM_CAVES = 100, MIN_CAVE_LEN = 10, MAX_CAVE_LEN = 40
+
 type map_type
 	public:
 	dim as int2d size
@@ -26,6 +29,11 @@ type map_type
 	dim as integer flowerAnimSeq 'index for flowerAnimFrame()
 	dim as double flowerAnimDuration = 0.2
 	dim as integer flowerAnimFrame(0 to 3) = {0, 1, 2, 1}
+	dim as integer flowerArray(0 to 4) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
+		fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
+	dim as integer resourceArray(0 to 9) = {fg_resource_salt, fg_resource_cole, _
+		fg_resource_iron, fg_resource_gold, fg_resource_silver, fg_resource_lazurite, _
+		fg_resource_platin, fg_resource_ruby, fg_resource_uranium, fg_resource_sapphire}
 	public:
 	declare function alloc(size as int2d) as integer
 	declare sub setRandom()
@@ -109,32 +117,24 @@ sub map_type.setNormal()
 			end if
 		end if
 	next
-	'place resources
-	'~ for yi as integer = 2 to size.y - 1
-		'~ for xi as integer = 0 to size.x - 1
-			'~ if getBgProp(int2d(xi, yi)) = IS_SOLID then
-				'~ if rnd > 0.3 then continue for
-				'~ dim as integer imgId = resourceArray(rndChoice(resourceArray()))
-				'~ setTile(int2d(xi, yi), imgId, -1, IS_SOLID or IS_RESOURCE)
-			'~ end if
-		'~ next
-	'~ next
-	'create resource / minera veins
+	'create resource / mineral veins
 	dim as move_def_type move
 	dim as int2d blockPos
-	dim as integer badMove, iMove, imgId
-	dim as integer numVeins = 300, maxVeinLen
-	for iVein as integer = 0 to numVeins - 1
+	dim as integer iMove, badMove, imgId, veinLen, iResource
+	for iVein as integer = 0 to NUM_VEINS - 1
 		'random start position (within borders)
 		blockPos.x = rndRange(1, size.x - 2)
 		blockPos.y = rndRange(2, size.y - 2)
 		'disallow one direction
 		badMove = rndRange(0, 3)
 		'random resource (for now, make heigt dependent)
-		imgId = resourceArray(rndChoice(resourceArray()))
-		maxVeinLen = rndRange(10, 20)
-		for iBlock as integer = 0 to maxVeinLen - 1
-			'if validPos(blockPos) then
+		'imgId = resourceArray(rndChoice(resourceArray()))
+		'height dependent resource
+		iResource = (blockPos.y * ubound(resourceArray)) \ size.y
+		if iResource < 0 or iResource > ubound(resourceArray) then logger.add("map_type.setNormal()")
+		imgId = resourceArray(iResource)
+		veinLen = rndRange(MIN_VEIN_LEN, MAX_VEIN_LEN)
+		for iBlock as integer = 0 to veinLen - 1
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
 				'set the resource on map
 				if getBgProp(blockPos) = IS_SOLID then
@@ -148,6 +148,24 @@ sub map_type.setNormal()
 				iMove = rndRange(0, 3)
 			loop while iMove = badMove
 			blockPos += move.dir_(iMove)
+		next
+	next
+	'create some caves
+	dim as integer caveLen
+	for iCave as integer = 0 to NUM_CAVES - 1
+		blockPos.x = rndRange(1, size.x - 2)
+		blockPos.y = rndRange(2, size.y - 2)
+		caveLen = rndRange(MIN_CAVE_LEN, MAX_CAVE_LEN)
+		for iBlock as integer = 0 to caveLen - 1
+			'if validPos(blockPos) then
+			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
+				'clear fg block
+				setTile(blockPos, 0, bg_shadow, IS_EMPTY, 0)
+			else
+				continue for 'next cave
+			end if
+			'make a step in random direction
+			blockPos += move.dir_(rndRange(0, 3))
 		next
 	next
 end sub

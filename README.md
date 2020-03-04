@@ -11,17 +11,15 @@ Control keys:
 * |escape| to exit
 
 Todo:
-
+* Use salt for? Food?
+* growing trees/fruit plants
+* Collect a resource, show resource object ball -> items list? can drop as well?
 * Block movement / changing marker pos during action (e.g drilling)
-* Generate Caves
 * Rock layers
-* Added resources to map, height depedendent distribution
 * Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
 * Do not move on ladder when standing and pressing down (for drilling)
-* Random walk with direction preference?
-* Collect a resource, show resource object ball -> items list? can drop as well?
 * Drill is faster, but no resource
-* shovel action, reuired for flower removal?
+* shovel action, required for flower removal?
 * Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
 * Make unsupported ladders and flowers drop?
 * Improve draw tool indicator code
@@ -45,10 +43,9 @@ Todo:
 * build stuff
 * Display player red on getting damaged
 * make map shared?
-* map load/save
+* map load/save + player stuff
 * map editor
 * add sound
-* Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
 * Change anim.start(), supply array instead of first image + numImages
 * Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
 * clean up image.bi : alignment struct -> single center flag, vert/horz combined
@@ -62,20 +59,26 @@ Todo:
 * item menu
 * elevator
 * lighting
-* growing trees/fruit plants
 * enemies
 * day/night
+* Main menu
 * item conversion and crafting
 * check 0_plans_todo_ideas_0
-* build spaceship, go to next world, more difficult, end goal go home, display universe
+* Goal steps:
+* 1.food for energy restore
+* 2.wood home and ladders and signs for storage
+* 3.factory for smelting?
+* 4.build spaceship, go to next world, more difficult, end goal go home, display universe
 
 Don't:
 
 * mapPos: dived by grid size?
 * plants in object class, needs update, add, remove, etc.
+* Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
 
 Done:
 
+* 04-03-2020: Generate Caves, random walk
 * 03-03-2020: Minneral / resource veins added
 * 03-03-2020: Map creation stuff moved to map class
 * 02-03-2020: Map view mode added
