@@ -13,18 +13,28 @@ const as short IS_INVALID = &h8000
 const NUM_VEINS = 500, MIN_VEIN_LEN = 10, MAX_VEIN_LEN = 20
 const NUM_CAVES = 100, MIN_CAVE_LEN = 10, MAX_CAVE_LEN = 40
 
+type map_tile
+	dim as short health, bgId, fgId, bgProp
+	declare sub set(fgId as short, bgId as short, bgProp as short = 0, health as short = -1)
+end type
+
+sub map_tile.set(fgId as short, bgId as short, bgProp as short = 0, health as short = -1)
+	if fgId >= 0 then this.fgId = fgId
+	if bgId >= 0 then this.bgId = bgId
+	if bgProp <> 0 then this.bgProp = bgProp 'flags
+	if health <> -1 then this.health = health
+end sub
+
+'-------------------------------------------------------------------------------
+
 type map_type
-	public:
-	dim as int2d size
-	dim as short health(any, any)
 	private:
-	dim as short bgId(any, any)
-	dim as short fgId(any, any)
-	dim as short bgProp(any, any)
-	'move this flower stuff elsewehere?
+	dim as map_tile mTile(any, any)
+	dim as int2d size
+	'move this flower stuff elsewhere?
 	dim as timer_type flowerSpawnTmr
 	dim as double flowerSpawnTime = 5.0
-	'move this flower stuff elsewehere?
+	'move this flower stuff elsewhere?
 	dim as timer_type flowerAnimTmr
 	dim as integer flowerAnimSeq 'index for flowerAnimFrame()
 	dim as double flowerAnimDuration = 0.2
@@ -38,10 +48,8 @@ type map_type
 	declare function alloc(size as int2d) as integer
 	declare sub setRandom()
 	declare sub setNormal()
-	declare function validIndex(x as integer, y as integer) as boolean
 	declare function validPos(pos_ as int2d) as boolean
-	declare function getBgProp(gridPos as int2d) as short
-	declare sub setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0, health_ as short = -1)
+	declare function tile(pos_ as int2d) byref as map_tile
 	declare sub draw_(scrMapDist as flt2d)
 	declare sub update() 'update flowers
 	declare sub killFlower(pos_ as int2d)
@@ -50,10 +58,7 @@ end type
 
 function map_type.alloc(size as int2d) as integer
 	this.size = size
-	redim bgId(size.x, size.y)
-	redim fgId(size.x, size.y)
-	redim bgProp(size.x, size.y)
-	redim health(size.x, size.y)
+	redim mTile(size.x, size.y)
 	flowerAnimSeq = 0
 	flowerAnimTmr.start(flowerAnimDuration)
 	flowerSpawnTmr.start(flowerSpawnTime)
@@ -63,44 +68,48 @@ end function
 sub map_type.setRandom()
 	for yi as integer = 0 to size.y - 1
 		for xi as integer = 0 to size.x - 1
-			bgId(xi, yi) = rndRange(bg_block_2a, bg_wall_5)
-			fgId(xi, yi) = rndRange(fg_artefact_bone_1, fg_tile_deco_2)
-			bgProp(size.x, size.y) = IS_EMPTY
-			health(size.x, size.y) = 1
+			with mTile(xi, yi)
+				.bgId = rndRange(bg_block_2a, bg_wall_5)
+				.fgId = rndRange(fg_artefact_bone_1, fg_tile_deco_2)
+				.bgProp = IS_EMPTY
+				.health = 1
+			end with
 		next
 	next
 end sub
 
 sub map_type.setNormal()
 	'setup a simple random map
+	dim as int2d gridPos
 	for yi as integer = 0 to size.y - 1
 		for xi as integer = 0 to size.x - 1
+			gridPos = int2d(xi, yi)
 			if (xi = 0) or (xi = size.x - 1) then
 				'set left/right hard borders
-				setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
+				tile(gridPos).set(0, bg_border, IS_SOLID or IS_FIXED)
 			else
 				if yi = 0 then
 					'no bg image on top row
-					setTile(int2d(xi, yi), 0, 0, IS_EMPTY)
+					tile(gridPos).set(0, 0, IS_EMPTY)
 				elseif yi = size.y - 1 then
 					'set left/right bottom border
-					setTile(int2d(xi, yi), 0, bg_border, IS_SOLID or IS_FIXED)
+					tile(gridPos).set(0, bg_border, IS_SOLID or IS_FIXED)
 				else 
 					if yi = 1 then
 						'second row grass covered dirt block
-						setTile(int2d(xi, yi), 0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID, 5)
+						tile(gridPos).set(0, rndRange(bg_surface_1, bg_surface_3), IS_SOLID, 5)
 					else
 						'normal dirt blocks
-						setTile(int2d(xi, yi), 0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID, 5)
+						tile(gridPos).set(0, rndRange(bg_earth_0, bg_earth_3), IS_SOLID, 5)
 					end if
-					'~ if rnd < 0.2 then
-						'~ 'random gaps
-						'~ setTile(int2d(xi, yi), 0, bg_shadow, IS_EMPTY, 0)
-					'~ end if
-					'~ if rnd < 0.2 then
-					'~ 'random ladder
-						'~ setTile(int2d(xi, yi), fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
-					'~ end if
+					if rnd < 0.2 then
+						'random gaps
+						tile(gridPos).set(0, bg_shadow, IS_EMPTY, 0)
+					end if
+					if rnd < 0.2 then
+					'random ladder
+						tile(gridPos).set(fg_construction_ladder, bg_shadow, IS_CLIMB, 1)
+					end if
 				end if
 			end if
 		next
@@ -109,11 +118,11 @@ sub map_type.setNormal()
 	dim as integer yi = 0
 	for xi as integer = 0 to size.x - 1
 		'check block below
-		if (getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
-			if (getBgProp(int2d(xi, yi)) and IS_EMPTY) then
+		if (tile(int2d(xi, yi + 1)).bgProp and IS_SOLID) then
+			if (tile(int2d(xi, yi)).bgProp and IS_EMPTY) then
 				if rnd > 0.5 then continue for
 				dim as integer imgId = flowerArray(rndChoice(flowerArray()))
-				setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
+				tile(int2d(xi, yi)).set(imgId, 0, IS_FLOWER, 1)
 			end if
 		end if
 	next
@@ -137,8 +146,8 @@ sub map_type.setNormal()
 		for iBlock as integer = 0 to veinLen - 1
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
 				'set the resource on map
-				if getBgProp(blockPos) = IS_SOLID then
-					setTile(blockPos, imgId, -1, IS_SOLID or IS_RESOURCE)
+				if tile(blockPos).bgProp = IS_SOLID then
+					tile(blockPos).set(imgId, -1, IS_SOLID or IS_RESOURCE)
 				end if
 			else
 				continue for 'next vein
@@ -160,7 +169,7 @@ sub map_type.setNormal()
 			'if validPos(blockPos) then
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
 				'clear fg block
-				setTile(blockPos, 0, bg_shadow, IS_EMPTY, 0)
+				tile(blockPos).set(0, bg_shadow, IS_EMPTY, 0)
 			else
 				continue for 'next cave
 			end if
@@ -170,68 +179,48 @@ sub map_type.setNormal()
 	next
 end sub
 
-function map_type.validIndex(x as integer, y as integer) as boolean
-	if x < 0 or x >= size.x then return false
-	if y < 0 or y >= size.y then return false
-	return true
-end function
-
 function map_type.validPos(pos_ as int2d) as boolean
 	if pos_.x < 0 or pos_.x >= size.x then return false
 	if pos_.y < 0 or pos_.y >= size.y then return false
 	return true
 end function
 
-'prevent out-of-bounds, good?
-function map_type.getBgProp(gridPos as int2d) as short
-	if validPos(gridPos) then
-		return bgProp(gridPos.x, gridPos.y)
-	else
-		'logger.add("map_type.getBgProp(): out-of-bounds")
-		return IS_INVALID 'good return value?
-	end if
+function map_type.tile(pos_ as int2d) byref as map_tile
+	return(mTile(pos_.x, pos_.y))
 end function
-
-'Id < 0: do not set/change
-sub map_type.setTile(pos_ as int2d, fgId as short, bgId as short, flags as short = 0, health_ as short = -1)
-	if validPos(pos_) then
-		if fgId >= 0 then this.fgId(pos_.x, pos_.y) = fgId
-		if bgId >= 0 then this.bgId(pos_.x, pos_.y) = bgId
-		if flags <> 0 then bgProp(pos_.x, pos_.y) = flags
-		if health_ <> -1 then health(pos_.x, pos_.y) = health_
-	end if
-end sub
 
 'Id = 0: do not draw
 sub map_type.draw_(scrMapDist as flt2d)
 	'get visible area (Tl = Top-Left, Br = Botton-Right)
+	dim as int2d gridPos
 	dim as int2d gridPosLt = getGridPos(scrMapDist)
 	dim as int2d gridPosBr = getGridPos(scrMapDist + toFlt2d(scr.edge))
 	dim as integer imgId
 	for yi as integer = gridPosLt.y to gridPosBr.y
 		for xi as integer = gridPosLt.x to gridPosBr.x
-			dim as int2d tileScrPos = getScrPos(int2d(xi, yi), scrMapDist)
-			if validIndex(xi, yi) then
+			gridPos = int2d(xi, yi)
+			dim as int2d tileScrPos = getScrPos(gridPos, scrMapDist)
+			if validPos(gridPos) then
 				'draw background tiles
-				imgId = bgId(xi, yi)
+				imgId = tile(gridPos).bgId
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_PSET)
 				end if
 				'draw foreground tiles, flowers / grass animated
-				imgId = fgId(xi, yi) + iif((bgProp(xi, yi) and IS_FLOWER), flowerAnimFrame(flowerAnimSeq), 0)
+				imgId = tile(gridPos).fgId + iif((tile(gridPos).bgProp and IS_FLOWER), flowerAnimFrame(flowerAnimSeq), 0)
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 				end if
 				'draw cracks on damaged blocks
-				if (bgProp(xi, yi) and IS_SOLID) then
-					dim as integer damage = 4 - health(xi, yi)
+				if (tile(gridPos).bgProp and IS_SOLID) then
+					dim as integer damage = 4 - tile(gridPos).health
 					if damage >= 0 and damage < 4 then 'range: 0...3
 						imgId = fg_tile_damage_1 + damage
 						imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 					end if
 				end if
 				'display tile properties bits
-				'f1.printTextAk(tileScrPos.x, tileScrPos.y, hex(bgProp(xi, yi)), FHA_CENTER)
+				f1.printTextAk(tileScrPos.x, tileScrPos.y, hex(tile(gridPos).bgProp), FHA_CENTER)
 				'f1.printTextAk(tileScrPos.x, tileScrPos.y, str(health(xi, yi)), FHA_CENTER)
 			end if
 		next
@@ -252,10 +241,10 @@ sub map_type.update() 'update flowers
 		dim as integer xi, yi = 0 'top row
 		for i as integer = 0 to 4 'try 5 positions
 			xi = rndRange(0, size.x - 1)
-			if (getBgProp(int2d(xi, yi + 1)) and IS_SOLID) then
-				if (getBgProp(int2d(xi, yi)) and IS_EMPTY) then
+			if (tile(int2d(xi, yi + 1)).bgProp and IS_SOLID) then
+				if (tile(int2d(xi, yi)).bgProp and IS_EMPTY) then
 					dim as integer imgId = flowerArray(rndChoice(flowerArray()))
-					setTile(int2d(xi, yi), imgId, 0, IS_FLOWER, 1)
+					tile(int2d(xi, yi)).set(imgId, 0, IS_FLOWER, 1)
 					exit for
 				end if
 			end if
@@ -266,8 +255,8 @@ end sub
 'realy?
 sub map_type.killFlower(pos_ as int2d)
 	if validPos(pos_) then
-		if (getBgProp(pos_) and IS_FLOWER) then
-			setTile(pos_, 0, -1, IS_EMPTY) 'bgProp)
+		if (tile(pos_).bgProp and IS_FLOWER) then
+			tile(pos_).set(0, -1, IS_EMPTY) 'bgProp)
 			'reset to prevent accidental direct re-spawn
 			flowerSpawnTmr.start(flowerSpawnTime)
 		end if
@@ -275,8 +264,6 @@ sub map_type.killFlower(pos_ as int2d)
 end sub
 
 destructor map_type()
-	erase bgId
-	erase fgId
-	erase bgProp
+	erase(mTile)
 end destructor
 

@@ -15,7 +15,9 @@ Todo:
 * growing trees/fruit plants
 * Collect a resource, show resource object ball -> items list? can drop as well?
 * Block movement / changing marker pos during action (e.g drilling)
+* Allow building ladder at current tile?
 * Rock layers
+* Build ladders while climbing
 * Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
 * Do not move on ladder when standing and pressing down (for drilling)
 * Drill is faster, but no resource
@@ -78,6 +80,7 @@ Don't:
 
 Done:
 
+* 08-03-2020: map_tile class added, map_type changes
 * 04-03-2020: Generate Caves, random walk
 * 03-03-2020: Minneral / resource veins added
 * 03-03-2020: Map creation stuff moved to map class
