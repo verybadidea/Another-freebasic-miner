@@ -8,14 +8,14 @@ type viewer_type
 	dim as int2d requestDir
 	dim as registered_key rkey
 	public:
-	declare function init_() as integer
+	declare function init() as integer
 	declare sub reset_(posMap as int2d)
 	declare sub processKeyInput()
 	declare sub update(dt as double) 'update state
 	declare sub updatePos(posChange as flt2d) 'update position
 end type
 
-function viewer_type.init_() as integer
+function viewer_type.init() as integer
 	'assing keys
 	rkey.add(FB.SC_LEFT)
 	rkey.add(FB.SC_RIGHT)

@@ -1,5 +1,7 @@
 #include once "string.bi"
 
+#undef PMAP 'used as map pointer in player class
+
 #include once "inc_lib/screen_v03.bi"
 #include once "inc_lib/keyboard_v01.bi"
 #include once "inc_lib/registered_key_02.bi"
@@ -38,6 +40,7 @@ dim shared as font_type f1
 dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 
 #include once "inc_game/image_enum.bi"
+#include once "inc_game/resource.bi"
 #include once "inc_game/directions.bi"
 #include once "inc_game/grid.bi"
 #include once "inc_game/map.bi"
@@ -59,7 +62,7 @@ f1.load("images/fonts/Berlin_sans32b.bmp", 16, 16)
 f1.autoTrim()
 f1.setProp(8, -2, FDM_ALPHA)
 
-randomize 345 'timer
+randomize 107 'timer
 
 dim as string quitStr
 logger.add("start main()")
@@ -88,7 +91,9 @@ end function
 function main() as string
 	dim as player_type miner
 	dim as viewer_type viewer
-	dim as E_INPUT_STATE inputState = INPUT_PLAYER 'INPUT_VIEW_MODE
+	dim as resource_type resource
+
+	dim as E_INPUT_STATE inputState = iif(1, INPUT_PLAYER, INPUT_VIEW_MODE)
 	dim as flt2d viewPosTl 'top-left
 
 	dim as integer numLoaded = 0
@@ -101,17 +106,16 @@ function main() as string
 	if loadImagesFromFile("images/overlay/") <> 0 then return "Error: No overlay images"
 	logger.add("Total images loaded: " & imgBufAll.numImages)
 
-	dim as map_type map
+	dim as map_type map = map_type(resource)
 	map.alloc(int2d(300, 100))
 	'map.setRandom()
 	map.setNormal()
 	
-	dim as integer result = miner.init_()
-	if result <> 0 then return "miner.init: " & result
+	if miner.init(resource) <> 0 then return "miner.init: fail"
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
 	miner.reset_(map, posMap, scr.cntr)
 
-	viewer.init_()
+	viewer.init()
 	viewer.reset_(posMap)
 
 	dim as loop_timer_type loopTimer

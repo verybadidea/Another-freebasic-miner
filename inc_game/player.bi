@@ -65,8 +65,10 @@ type player_type
 	dim as flt2d posScr 'position on screen [pixels]
 	private:
 	dim as registered_key rkey
-	dim as map_type ptr pMap_
+	dim as map_type ptr pMap
+	dim as resource_type ptr pRes
 	dim as image_type ptr pImg 'current image to display
+	dim as inventory_type inv
 	dim as int2d requestDir
 	dim as int2d currentGridPos
 	dim as int2d markerGridPos
@@ -90,8 +92,10 @@ type player_type
 	dim as image_type imgDrillUp(NUM_IMG_DRILL_UP-1)
 	dim as image_type imgDead
 	public:
-	declare function init_() as integer
+	declare function init(byref resource as resource_type) as integer
 	declare sub reset_(byref map as map_type, posMap as int2d, posScr as int2d)
+	declare function loadImg() as integer
+	declare sub setKeys()
 	declare sub processKeyInput()
 	declare sub processMouseInput()
 	declare sub tryAction()
@@ -107,7 +111,29 @@ type player_type
 end type
 
 'copy from image buffer
-function player_type.init_() as integer
+function player_type.init(byref resource as resource_type) as integer
+	if loadImg() <> 0 then return -1
+	anim.init(pImg) 'tell the anim class where the player image is
+	setKeys() 'assing keys
+	pRes = @resource
+	return 0
+end function
+
+sub player_type.reset_(byref map as map_type, posMap as int2d, posScr as int2d)
+	pMap = @map
+	this.posMap = toFlt2d(posMap + int2d(0, -00)) '1 pixel higer ???
+	this.posScr = toFlt2d(posScr + int2d(0, -00)) '1 pixel higer ???
+	state = MINER_NONE
+	prevState = MINER_NONE
+	pImg = @imgWink(0)
+	health = MINER_MAX_HEALTH
+	selectedTool = TOOL_DRILL
+	requestedAction = -1
+	requestDir = int2d(0, -1) 'set off-screen
+	markerGridPos = int2d(-1, -1) 'set invalid pos
+end sub
+
+function player_type.loadImg() as integer
 	for i as integer = 0 to NUM_IMG_WINK - 1
 		if imgBufAll.validImage(act_wink_1 + i) = false then return -1
 		imgBufAll.image(act_wink_1 + i).copyTo(imgWink(i))
@@ -130,7 +156,6 @@ function player_type.init_() as integer
 		imgBufAll.image(act_pick_1 + i).copyTo(imgPick(DIR_LE, i))
 		imgBufAll.image(act_pick_1 + i).hFlipTo(imgPick(DIR_RI, i))
 	next
-
 	for i as integer = 0 to NUM_IMG_DRILL_SIDE - 1
 		if imgBufAll.validImage(act_drill_1 + i) = false then return -6
 		imgBufAll.image(act_drill_1 + i).copyTo(imgDrillSide(DIR_LE, i))
@@ -144,7 +169,6 @@ function player_type.init_() as integer
 		if imgBufAll.validImage(act_drill_up_1 + i) = false then return -6
 		imgBufAll.image(act_drill_up_1 + i).copyTo(imgDrillUp(i))
 	next
-
 	if imgBufAll.validImage(act_dead) = false then return -9
 	imgBufAll.image(act_dead).copyTo(imgDead)
 	'healthbar
@@ -152,8 +176,10 @@ function player_type.init_() as integer
 		if imgBufAll.validImage(ol_health_0 + i) = false then return -10
 		imgBufAll.image(ol_health_0 + i).copyTo(imgHealth(i))
 	next
-	anim.init(pImg) 'tell the anim class where the player image is
-	'assing keys
+	return 0
+end function
+
+sub player_type.setKeys()
 	rkey.add(FB.SC_LEFT)
 	rkey.add(FB.SC_RIGHT)
 	rkey.add(FB.SC_UP)
@@ -161,22 +187,6 @@ function player_type.init_() as integer
 	rkey.add(FB.SC_PAGEDOWN)
 	rkey.add(FB.SC_PAGEUP)
 	rkey.add(FB.SC_SPACE)
-	return 0
-end function
-
-sub player_type.reset_(byref map as map_type, posMap as int2d, posScr as int2d)
-	pMap_ = @map
-	this.posMap = toFlt2d(posMap + int2d(0, -00)) '1 pixel higer ???
-	this.posScr = toFlt2d(posScr + int2d(0, -00)) '1 pixel higer ???
-	state = MINER_NONE
-	prevState = MINER_NONE
-	pImg = @imgWink(0)
-	health = MINER_MAX_HEALTH
-	selectedTool = TOOL_DRILL
-	requestedAction = -1
-	requestDir = int2d(0, -1) 'set off-screen
-	markerGridPos = int2d(-1, -1) 'set invalid pos
-	
 end sub
 
 sub player_type.processKeyInput()
@@ -247,20 +257,20 @@ sub player_type.processMouseInput()
 end sub
 
 sub player_type.tryAction() 'perform action
-	if pMap_->validPos(markerGridPos) then
+	if pMap->validPos(markerGridPos) then
 		select case requestedAction
 		case TOOL_LADDER
-			if (pMap_->tile(markerGridPos).bgProp and (IS_SOLID or IS_CLIMB)) = 0 then
+			if (pMap->tile(markerGridPos).bgProp and (IS_SOLID or IS_CLIMB)) = 0 then
 				if numLadders > 0 then
 					numLadders -= 1
 					dim as integer bgImgId = iif(markerGridPos.y = 0, -1, bg_shadow)
-					pMap_->tile(markerGridPos).set(fg_construction_ladder, bgImgId, IS_CLIMB, 1)
+					pMap->tile(markerGridPos).set(fg_construction_ladder, bgImgId, IS_CLIMB, 1)
 				end if
 			end if
 		case TOOL_PICK
 			if requestDir.y = 0 then 'left or right only, not up or down
 				if actionTmr.isActive = false then
-					if (pMap_->tile(markerGridPos).bgProp and (IS_EMPTY or IS_FIXED)) = 0 then
+					if (pMap->tile(markerGridPos).bgProp and (IS_EMPTY or IS_FIXED)) = 0 then
 						dim as integer pickDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
 						anim.start(@imgPick(pickDir, 0), NUM_IMG_PICK, 1, FRAME_TIME_PICK)
 						actionTmr.start(NUM_IMG_PICK * FRAME_TIME_PICK) '2 * 0.15
@@ -273,8 +283,7 @@ sub player_type.tryAction() 'perform action
 			if actionTmr.isActive = false then
 				select case state
 				case MINER_IDLE, MINER_STAND_LEFT, MINER_STAND_RIGHT
-					logger.add("" & pMap_->tile(markerGridPos).bgProp)
-					if (pMap_->tile(markerGridPos).bgProp and (IS_EMPTY or IS_FIXED)) = 0 then
+					if (pMap->tile(markerGridPos).bgProp and (IS_EMPTY or IS_FIXED)) = 0 then
 						select case requestDir.y
 						case 0 'left or right
 							dim as integer drillDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
@@ -408,19 +417,24 @@ sub player_type.updateAction()
 	'pick axe action done
 	if actionTmr.ended() then
 		dim as integer bgImgId = iif(markerGridPos.y = 0, -1, bg_shadow)
-		if pMap_->validPos(actionGridPos) = false then logger.add("invalid actionGridPos: BAD")
-		'pMap_->health(actionGridPos.x, actionGridPos.y) -= 1
-		pMap_->tile(actionGridPos).health -= 1
+		if pMap->validPos(actionGridPos) = false then
+			logger.add("player_type.updateAction(): Fatal error")
+		end if
+		pMap->tile(actionGridPos).health -= 1
 		'remove tile
-		if pMap_->tile(actionGridPos).health <= 0 then
-			if pMap_->tile(actionGridPos).bgProp and IS_RESOURCE then
-				logger.add("Resource collected: " & pMap_->tile(actionGridPos).fgId)
+		if pMap->tile(actionGridPos).health <= 0 then
+			if pMap->tile(actionGridPos).bgProp and IS_RESOURCE then
+				'pMap->tile(actionGridPos).set(0, bgId as short, IS_RESOURCE, 0)
+				logger.add("Resource found: " & pRes->resId(pMap->tile(actionGridPos).fgId))
+				pMap->tile(actionGridPos).fgId -= 22 'magic number!
+				pMap->tile(actionGridPos).bgId = bg_shadow
+				pMap->tile(actionGridPos).bgProp = IS_RESOURCE
+			else
+				pMap->tile(actionGridPos).set(0, bgImgId, IS_EMPTY)
 			end if
-			'logger.add(str(pMap_->getBgProp(actionGridPos)))
-			pMap_->tile(actionGridPos).set(0, bgImgId, IS_EMPTY)
 			requestedAction = -1
 			'check flower above & remove
-			pMap_->killFlower(actionGridPos + int2d(0, -1))
+			pMap->killFlower(actionGridPos + int2d(0, -1))
 		end if
 		dim as integer standDir = iif(requestDir.x < 0, DIR_LE, DIR_RI)
 		anim.stop_(@imgWalk(standDir, 0))
@@ -433,7 +447,7 @@ function player_type.tryWalk(xChangeReq as float, byref posChangeAct as flt2d) a
 	dim as integer tileEgdeOffset = iif(xChangeReq < 0, +GRID_HALF_X, -GRID_HALF_X) 'right or left side of tile
 	dim as int2d targetGridPosHead = getGridPosXY(posMap.x + playerEdgeOffset + xChangeReq, posMap.y - MINER_HAED_DIST + 1)
 	dim as int2d targetGridPosFeet = getGridPosXY(posMap.x + playerEdgeOffset + xChangeReq, posMap.y + MINER_FEET_DIST - 1)
-	if (pMap_->tile(targetGridPosHead).bgProp and IS_SOLID) or (pMap_->tile(targetGridPosFeet).bgProp and IS_SOLID) then
+	if (pMap->tile(targetGridPosHead).bgProp and IS_SOLID) or (pMap->tile(targetGridPosFeet).bgProp and IS_SOLID) then
 		dim as float xPosChangeHead = (targetGridPosHead.x * GRID_SIZE_X + tileEgdeOffset) - (posMap.x + playerEdgeOffset)
 		dim as float xPosChangeFeet = (targetGridPosfeet.x * GRID_SIZE_X + tileEgdeOffset) - (posMap.x + playerEdgeOffset)
 		posChangeAct.x = iif(abs(xPosChangeHead) < abs(xPosChangeFeet), xPosChangeHead, xPosChangeFeet) '-5 > -3 ? no, ret -3
@@ -451,14 +465,14 @@ function player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d) 
 	dim as integer tileEgdeOffset = iif(yChangeReq < 0, +GRID_HALF_Y, -GRID_HALF_Y)
 	'check current tile can be climbed
 	'dim as int2d currentGridPos = getGridPos(posMap)
-	if pMap_->tile(currentGridPos).bgProp and IS_CLIMB then
+	if pMap->tile(currentGridPos).bgProp and IS_CLIMB then
 		'check not to far from ladder
 		dim as int2d tileScrPos = getScrPos(currentGridPos, posMap - posScr)
 		if abs(tileScrPos.x - posScr.x) < MINER_LADDER_DIST then
 			'check target position
 			dim as int2d targetGridPos = getGridPosXY(posMap.x, posMap.y + playerEdgeOffset + yChangeReq)
-			if (pMap_->validPos(targetGridPos) = false) orelse _
-				(pMap_->tile(targetGridPos).bgProp and IS_CLIMB) = 0 then
+			if (pMap->validPos(targetGridPos) = false) orelse _
+				(pMap->tile(targetGridPos).bgProp and IS_CLIMB) = 0 then
 				logger.add("cannot climb, end of ladder")
 				posChangeAct.y = (targetGridPos.y * GRID_SIZE_Y + tileEgdeOffset) - (posMap.y + playerEdgeOffset)
 				newState = MINER_CLIMB_STOP
@@ -487,7 +501,7 @@ function player_type.tryFall(dt as double, byref posChangeAct as flt2d) as integ
 	dim as int2d targetGridPosLefoot = getGridPosXY(posMap.x - MINER_HALF_WIDTH + 1, posMap.y + MINER_FEET_DIST + fallDist)
 	dim as int2d targetGridPosRifoot = getGridPosXY(posMap.x + MINER_HALF_WIDTH - 1, posMap.y + MINER_FEET_DIST + fallDist)
 	'nothing solid below both feet?
-	if (pMap_->tile(targetGridPosLefoot).bgProp and IS_SOLID) = 0 and (pMap_->tile(targetGridPosRifoot).bgProp and IS_SOLID) = 0 then
+	if (pMap->tile(targetGridPosLefoot).bgProp and IS_SOLID) = 0 and (pMap->tile(targetGridPosRifoot).bgProp and IS_SOLID) = 0 then
 		if prevState <> MINER_FALL then
 			logger.add("start falling")
 			fallSpeed = 0.0
@@ -547,7 +561,7 @@ end function
 
 sub player_type.draw_()
 	'highlight target tile with dashed square
-	if pMap_->validPos(markerGridPos) then
+	if pMap->validPos(markerGridPos) then
 		dim as int2d markerScrPos = getScrPos(markerGridPos, posMap - posScr)
 		line(markerScrPos.x - GRID_HALF_X - 1, markerScrPos.y - GRID_HALF_Y - 1)_
 			-step(GRID_SIZE_X, GRID_SIZE_Y), rgba(255, 255, 255, 255), b, &b1010101010101010
@@ -576,4 +590,8 @@ sub player_type.draw_()
 	locate 2,1: print getGridPos(posMap);
 	'locate 3,1: print format(miner.idleWaitTmr.timeLeft(), "0.0");
 	locate 3,1: print requestDir;
+	'display inventory
+	for i as integer = 0 to inv.numItems() - 1
+		f1.printTextAk(10, 100 + i * 20, inv.item(i).label & ": " & inv.item(i).amount, FHA_LEFT)
+	next
 end sub

@@ -11,6 +11,9 @@ Control keys:
 * |escape| to exit
 
 Todo:
+* Change bgProp to flag
+* Clean up flower stuff
+* make imgBufAll not shared
 * Use salt for? Food?
 * growing trees/fruit plants
 * Collect a resource, show resource object ball -> items list? can drop as well?
@@ -37,14 +40,17 @@ Todo:
 * reset idle on any key press (e.g. escape)' and start action anim
 * draw square centered? What?
 * add grass to all top blocks? (grass dirt block, not grass flower)
-* invertory
+* invertory:
+  * Stuff that can be placed: blocks, ladders, lamps
+    * background stuff: blocks
+    * foreground stuff: ladders, lamps
+  * Stuff that cannot be placed: pick axe, dynamite, food, coal. Why not?
 * Show bagpack with number of items
 * use player size struct, AABB? note: height not centered with tile
 * fix size of images? 66x66 ?
 * Add screenshot to wiki
 * build stuff
 * Display player red on getting damaged
-* make map shared?
 * map load/save + player stuff
 * map editor
 * add sound
@@ -77,6 +83,7 @@ Don't:
 * mapPos: dived by grid size?
 * plants in object class, needs update, add, remove, etc.
 * Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
+* make map shared?
 
 Done:
 

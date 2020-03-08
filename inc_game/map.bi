@@ -31,6 +31,7 @@ type map_type
 	private:
 	dim as map_tile mTile(any, any)
 	dim as int2d size
+	dim as resource_type ptr pRes
 	'move this flower stuff elsewhere?
 	dim as timer_type flowerSpawnTmr
 	dim as double flowerSpawnTime = 5.0
@@ -41,10 +42,8 @@ type map_type
 	dim as integer flowerAnimFrame(0 to 3) = {0, 1, 2, 1}
 	dim as integer flowerArray(0 to 4) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
 		fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
-	dim as integer resourceArray(0 to 9) = {fg_resource_salt, fg_resource_cole, _
-		fg_resource_iron, fg_resource_gold, fg_resource_silver, fg_resource_lazurite, _
-		fg_resource_platin, fg_resource_ruby, fg_resource_uranium, fg_resource_sapphire}
 	public:
+	declare constructor(byref resource as resource_type)
 	declare function alloc(size as int2d) as integer
 	declare sub setRandom()
 	declare sub setNormal()
@@ -55,6 +54,10 @@ type map_type
 	declare sub killFlower(pos_ as int2d)
 	declare destructor()
 end type
+
+constructor map_type(byref resource as resource_type)
+	pRes = @resource
+end constructor
 
 function map_type.alloc(size as int2d) as integer
 	this.size = size
@@ -139,9 +142,9 @@ sub map_type.setNormal()
 		'random resource (for now, make heigt dependent)
 		'imgId = resourceArray(rndChoice(resourceArray()))
 		'height dependent resource
-		iResource = (blockPos.y * ubound(resourceArray)) \ size.y
-		if iResource < 0 or iResource > ubound(resourceArray) then logger.add("map_type.setNormal()")
-		imgId = resourceArray(iResource)
+		iResource = (blockPos.y * pRes->numRes()) \ size.y
+		if iResource < 0 or iResource >= pRes->numRes() then logger.add("map_type.setNormal()")
+		imgId = pRes->imgId(iResource)
 		veinLen = rndRange(MIN_VEIN_LEN, MAX_VEIN_LEN)
 		for iBlock as integer = 0 to veinLen - 1
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
