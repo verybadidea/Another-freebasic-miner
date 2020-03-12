@@ -43,6 +43,7 @@ dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 #include once "inc_game/resource.bi"
 #include once "inc_game/directions.bi"
 #include once "inc_game/grid.bi"
+#include once "inc_game/flower.bi"
 #include once "inc_game/map.bi"
 #include once "inc_game/anim.bi"
 #include once "inc_game/player.bi"
@@ -92,6 +93,7 @@ function main() as string
 	dim as player_type miner
 	dim as viewer_type viewer
 	dim as resource_type resource
+	dim as flower_type flower
 
 	dim as E_INPUT_STATE inputState = iif(1, INPUT_PLAYER, INPUT_VIEW_MODE)
 	dim as flt2d viewPosTl 'top-left
@@ -106,12 +108,12 @@ function main() as string
 	if loadImagesFromFile("images/overlay/") <> 0 then return "Error: No overlay images"
 	logger.add("Total images loaded: " & imgBufAll.numImages)
 
-	dim as map_type map = map_type(resource)
-	map.alloc(int2d(300, 100))
+	dim as map_type map = map_type(resource, flower)
+	map.alloc(int2d(30, 100))
 	'map.setRandom()
 	map.setNormal()
 	
-	if miner.init(resource) <> 0 then return "miner.init: fail"
+	if miner.init(resource, flower) <> 0 then return "miner.init: fail"
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
 	miner.reset_(map, posMap, scr.cntr)
 
@@ -137,7 +139,7 @@ function main() as string
 		
 		miner.update(loopTimer.getdt())
 		viewer.update(loopTimer.getdt())
-		map.update()
+		if flower.update() = true then map.tryPlaceFlower()
 
 		select case inputState
 		case INPUT_PLAYER

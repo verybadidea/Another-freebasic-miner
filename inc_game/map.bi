@@ -5,6 +5,7 @@ const as short IS_SOLID = &h0004
 const as short IS_CLIMB = &h0008
 const as short IS_FLOWER = &h0010
 const as short IS_RESOURCE = &h0020
+const as short IS_COLLECT = &h0040
 const as short IS_INVALID = &h8000
 'const as short IS_SUPPORT = &h0008
 'const as short IS_INVALID = &h8000
@@ -13,15 +14,17 @@ const as short IS_INVALID = &h8000
 const NUM_VEINS = 500, MIN_VEIN_LEN = 10, MAX_VEIN_LEN = 20
 const NUM_CAVES = 100, MIN_CAVE_LEN = 10, MAX_CAVE_LEN = 40
 
+'-------------------------------------------------------------------------------
+
 type map_tile
-	dim as short health, bgId, fgId, bgProp
-	declare sub set(fgId as short, bgId as short, bgProp as short = 0, health as short = -1)
+	dim as short health, bgId, fgId, flags
+	declare sub set(fgId as short, bgId as short, flags as short = 0, health as short = -1)
 end type
 
-sub map_tile.set(fgId as short, bgId as short, bgProp as short = 0, health as short = -1)
+sub map_tile.set(fgId as short, bgId as short, flags as short = 0, health as short = -1)
 	if fgId >= 0 then this.fgId = fgId
 	if bgId >= 0 then this.bgId = bgId
-	if bgProp <> 0 then this.bgProp = bgProp 'flags
+	if flags <> 0 then this.flags = flags 'flags
 	if health <> -1 then this.health = health
 end sub
 
@@ -32,39 +35,27 @@ type map_type
 	dim as map_tile mTile(any, any)
 	dim as int2d size
 	dim as resource_type ptr pRes
-	'move this flower stuff elsewhere?
-	dim as timer_type flowerSpawnTmr
-	dim as double flowerSpawnTime = 5.0
-	'move this flower stuff elsewhere?
-	dim as timer_type flowerAnimTmr
-	dim as integer flowerAnimSeq 'index for flowerAnimFrame()
-	dim as double flowerAnimDuration = 0.2
-	dim as integer flowerAnimFrame(0 to 3) = {0, 1, 2, 1}
-	dim as integer flowerArray(0 to 4) = {fg_landscape_flower_1a, fg_landscape_flower_2a, _
-		fg_landscape_flower_3a, fg_landscape_flower_4a, fg_landscape_gras_1}
+	dim as flower_type ptr pFlower
 	public:
-	declare constructor(byref resource as resource_type)
+	declare constructor(byref resource as resource_type, byref flower as flower_type)
 	declare function alloc(size as int2d) as integer
 	declare sub setRandom()
 	declare sub setNormal()
 	declare function validPos(pos_ as int2d) as boolean
 	declare function tile(pos_ as int2d) byref as map_tile
 	declare sub draw_(scrMapDist as flt2d)
-	declare sub update() 'update flowers
-	declare sub killFlower(pos_ as int2d)
+	declare function tryPlaceFlower() as boolean
 	declare destructor()
 end type
 
-constructor map_type(byref resource as resource_type)
+constructor map_type(byref resource as resource_type, byref flower as flower_type)
 	pRes = @resource
+	pFlower = @flower
 end constructor
 
 function map_type.alloc(size as int2d) as integer
 	this.size = size
 	redim mTile(size.x, size.y)
-	flowerAnimSeq = 0
-	flowerAnimTmr.start(flowerAnimDuration)
-	flowerSpawnTmr.start(flowerSpawnTime)
 	return 0
 end function
 
@@ -74,7 +65,7 @@ sub map_type.setRandom()
 			with mTile(xi, yi)
 				.bgId = rndRange(bg_block_2a, bg_wall_5)
 				.fgId = rndRange(fg_artefact_bone_1, fg_tile_deco_2)
-				.bgProp = IS_EMPTY
+				.flags = IS_EMPTY
 				.health = 1
 			end with
 		next
@@ -121,11 +112,10 @@ sub map_type.setNormal()
 	dim as integer yi = 0
 	for xi as integer = 0 to size.x - 1
 		'check block below
-		if (tile(int2d(xi, yi + 1)).bgProp and IS_SOLID) then
-			if (tile(int2d(xi, yi)).bgProp and IS_EMPTY) then
+		if (tile(int2d(xi, yi + 1)).flags and IS_SOLID) then
+			if (tile(int2d(xi, yi)).flags and IS_EMPTY) then
 				if rnd > 0.5 then continue for
-				dim as integer imgId = flowerArray(rndChoice(flowerArray()))
-				tile(int2d(xi, yi)).set(imgId, 0, IS_FLOWER, 1)
+				tile(int2d(xi, yi)).set(pFlower->randomImgId(), 0, IS_FLOWER, 1)
 			end if
 		end if
 	next
@@ -149,7 +139,7 @@ sub map_type.setNormal()
 		for iBlock as integer = 0 to veinLen - 1
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then
 				'set the resource on map
-				if tile(blockPos).bgProp = IS_SOLID then
+				if tile(blockPos).flags = IS_SOLID then
 					tile(blockPos).set(imgId, -1, IS_SOLID or IS_RESOURCE)
 				end if
 			else
@@ -204,18 +194,24 @@ sub map_type.draw_(scrMapDist as flt2d)
 			gridPos = int2d(xi, yi)
 			dim as int2d tileScrPos = getScrPos(gridPos, scrMapDist)
 			if validPos(gridPos) then
+			
 				'draw background tiles
 				imgId = tile(gridPos).bgId
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_PSET)
 				end if
-				'draw foreground tiles, flowers / grass animated
-				imgId = tile(gridPos).fgId + iif((tile(gridPos).bgProp and IS_FLOWER), flowerAnimFrame(flowerAnimSeq), 0)
+
+				'draw foreground tiles, with flowers / grass animated
+				imgId = tile(gridPos).fgId
+				if (tile(gridPos).flags and IS_FLOWER) then
+					imgId += pFlower->imgIdOffset()
+				end if
 				if imgId > 0 andalso imgBufAll.validImage(imgId) then
 					imgBufAll.image(imgId).drawxym(tileScrPos.x, tileScrPos.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 				end if
+				
 				'draw cracks on damaged blocks
-				if (tile(gridPos).bgProp and IS_SOLID) then
+				if (tile(gridPos).flags and IS_SOLID) then
 					dim as integer damage = 4 - tile(gridPos).health
 					if damage >= 0 and damage < 4 then 'range: 0...3
 						imgId = fg_tile_damage_1 + damage
@@ -223,50 +219,28 @@ sub map_type.draw_(scrMapDist as flt2d)
 					end if
 				end if
 				'display tile properties bits
-				f1.printTextAk(tileScrPos.x, tileScrPos.y, hex(tile(gridPos).bgProp), FHA_CENTER)
-				'f1.printTextAk(tileScrPos.x, tileScrPos.y, str(health(xi, yi)), FHA_CENTER)
+				'f1.printTextAk(tileScrPos.x, tileScrPos.y, hex(tile(gridPos).flags), FHA_CENTER)
+				'f1.printTextAk(tileScrPos.x, tileScrPos.y, str(tile(gridPos).flags), FHA_CENTER)
 			end if
 		next
 	next
 end sub
 
-'move to different class?
-sub map_type.update() 'update flowers
-	'flower animation
-	if flowerAnimTmr.ended() then
-		flowerAnimTmr.start(flowerAnimDuration)
-		flowerAnimSeq += 1
-		if flowerAnimSeq > ubound(flowerAnimFrame) then flowerAnimSeq = flowerAnimFrame(0)
-	end if
-	'flower spawing
-	if flowerSpawnTmr.ended() then
-		flowerSpawnTmr.start(flowerSpawnTime)
-		dim as integer xi, yi = 0 'top row
-		for i as integer = 0 to 4 'try 5 positions
-			xi = rndRange(0, size.x - 1)
-			if (tile(int2d(xi, yi + 1)).bgProp and IS_SOLID) then
-				if (tile(int2d(xi, yi)).bgProp and IS_EMPTY) then
-					dim as integer imgId = flowerArray(rndChoice(flowerArray()))
-					tile(int2d(xi, yi)).set(imgId, 0, IS_FLOWER, 1)
-					exit for
-				end if
+'return true on new flower placed
+function map_type.tryPlaceFlower() as boolean
+	dim as integer xi, yi = 0 'top row
+	for i as integer = 0 to 4 'try 5 positions
+		xi = rndRange(0, size.x - 1)
+		if (tile(int2d(xi, yi + 1)).flags and IS_SOLID) then
+			if (tile(int2d(xi, yi)).flags and IS_EMPTY) then
+				tile(int2d(xi, yi)).set(pFlower->randomImgId(), 0, IS_FLOWER, 1)
+				return true
 			end if
-		next
-	end if
-end sub
-
-'realy?
-sub map_type.killFlower(pos_ as int2d)
-	if validPos(pos_) then
-		if (tile(pos_).bgProp and IS_FLOWER) then
-			tile(pos_).set(0, -1, IS_EMPTY) 'bgProp)
-			'reset to prevent accidental direct re-spawn
-			flowerSpawnTmr.start(flowerSpawnTime)
 		end if
-	end if
-end sub
+	next
+	return false
+end function
 
 destructor map_type()
 	erase(mTile)
 end destructor
-

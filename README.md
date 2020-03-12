@@ -11,22 +11,23 @@ Control keys:
 * |escape| to exit
 
 Todo:
-* Change bgProp to flag
-* Clean up flower stuff
+* Set marker invalid when swithing to idle?
+* Make collectable object, not part of map? Objects disapear after 30 seconds? blink last 10 second?
+* Check player object distance.
 * make imgBufAll not shared
 * Use salt for? Food?
 * growing trees/fruit plants
 * Collect a resource, show resource object ball -> items list? can drop as well?
 * Block movement / changing marker pos during action (e.g drilling)
 * Allow building ladder at current tile?
-* Rock layers
 * Build ladders while climbing
-* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
 * Do not move on ladder when standing and pressing down (for drilling)
+* Rock layers
+* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
 * Drill is faster, but no resource
 * shovel action, required for flower removal?
 * Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
-* Make unsupported ladders and flowers drop?
+* Make unsupported ladders and flowers drop? and drop collatables
 * Improve draw tool indicator code
 * Change of player class stores images, less variabes
 * Container / class for player images?
@@ -87,6 +88,7 @@ Don't:
 
 Done:
 
+* 12-03-2020: Flower stuff cleaned up
 * 08-03-2020: map_tile class added, map_type changes
 * 04-03-2020: Generate Caves, random walk
 * 03-03-2020: Minneral / resource veins added
