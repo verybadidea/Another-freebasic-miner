@@ -8,9 +8,15 @@ Control keys:
 * |up|, |down|, |left|, |right| arrow keys
 * |space| for build / destroy action
 * |pageup|, |pagedown| to change action / tool
+* |tab| to show inventory
 * |escape| to exit
 
 Todo:
+* Fix -22, +22
+* make getMapPos(gridPos) function
+* Resize object and move sprites to different folder
+* Background images
+* More images, better ordered, e.g. trees
 * Set marker invalid when swithing to idle?
 * Make collectable object, not part of map? Objects disapear after 30 seconds? blink last 10 second?
 * Check player object distance.
@@ -88,6 +94,7 @@ Don't:
 
 Done:
 
+* 12-03-2020: Only show inventory while <tab> is pressed
 * 12-03-2020: Flower stuff cleaned up
 * 08-03-2020: map_tile class added, map_type changes
 * 04-03-2020: Generate Caves, random walk

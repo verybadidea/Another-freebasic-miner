@@ -1,3 +1,5 @@
+'images in alphabetical order!
+
 enum E_IMG_ALL
 	img_null
 	
@@ -132,28 +134,28 @@ enum E_IMG_ALL
 	fg_monster_0
 	fg_monster_1
 	fg_monster_2
-	fg_obect_cole
-	fg_obect_diamond_blue
-	fg_obect_diamond_green
-	fg_obect_diamond_pink
-	fg_obect_diamond_red
-	fg_obect_diamond_small_blue
-	fg_obect_diamond_small_green
-	fg_obect_diamond_small_pink
-	fg_obect_emerald_blue
-	fg_obect_emerald_red
-	fg_obect_emerald_yellow
-	fg_obect_gold
-	fg_obect_iron
-	fg_obect_lazurite
-	fg_obect_patrickium
-	fg_obect_platin
-	fg_obect_ruby
-	fg_obect_salt
-	fg_obect_sapphire
-	fg_obect_silver
-	fg_obect_uranium
-	fg_obect_yorby
+	fg_object_cole
+	fg_object_diamond_blue
+	fg_object_diamond_green
+	fg_object_diamond_pink
+	fg_object_diamond_red
+	fg_object_diamond_small_blue
+	fg_object_diamond_small_green
+	fg_object_diamond_small_pink
+	fg_object_emerald_blue
+	fg_object_emerald_red
+	fg_object_emerald_yellow
+	fg_object_gold
+	fg_object_iron
+	fg_object_lazurite
+	fg_object_patrickium
+	fg_object_platin
+	fg_object_ruby
+	fg_object_salt
+	fg_object_sapphire
+	fg_object_silver
+	fg_object_uranium
+	fg_object_yorby
 	fg_resource_cole
 	fg_resource_diamond_blue
 	fg_resource_diamond_green

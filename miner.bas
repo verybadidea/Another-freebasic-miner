@@ -46,6 +46,7 @@ dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 #include once "inc_game/flower.bi"
 #include once "inc_game/map.bi"
 #include once "inc_game/anim.bi"
+#include once "inc_game/collect.bi"
 #include once "inc_game/player.bi"
 #include once "inc_game/viewer.bi"
 
@@ -73,7 +74,7 @@ print quitStr
 screenlock
 scr.dimScreen(0.8)
 screenunlock
-sleep 10000
+while inkey <> KEY_ESC : sleep 1 : wend
 end
 
 enum E_INPUT_STATE
@@ -85,7 +86,7 @@ end enum
 function loadImagesFromFile(dirName as string) as integer
 	dim as integer numLoaded = imgBufAll.loadDir(dirName)
 	if numLoaded <= 0 then return -1
-	logger.add(dirName & " " & numLoaded)
+	'logger.add(dirName & " " & numLoaded)
 	return 0
 end function
 
@@ -94,6 +95,8 @@ function main() as string
 	dim as viewer_type viewer
 	dim as resource_type resource
 	dim as flower_type flower
+	dim as collectable_list collectList
+	dim as inventory_type inv
 
 	dim as E_INPUT_STATE inputState = iif(1, INPUT_PLAYER, INPUT_VIEW_MODE)
 	dim as flt2d viewPosTl 'top-left
@@ -113,7 +116,7 @@ function main() as string
 	'map.setRandom()
 	map.setNormal()
 	
-	if miner.init(resource, flower) <> 0 then return "miner.init: fail"
+	if miner.init(flower, inv, collectList) <> 0 then return "miner.init: fail"
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
 	miner.reset_(map, posMap, scr.cntr)
 
@@ -140,6 +143,7 @@ function main() as string
 		miner.update(loopTimer.getdt())
 		viewer.update(loopTimer.getdt())
 		if flower.update() = true then map.tryPlaceFlower()
+		collectList.update(miner.posMap, 10.0, resource, inv, loopTimer.getdt())
 
 		select case inputState
 		case INPUT_PLAYER
@@ -153,6 +157,7 @@ function main() as string
 		
 		scr.clearScreen(rgba(0, 0, 0, 255))
 		map.draw_(viewPosTl)
+		collectList.draw_(viewPosTl)
 		'locate 2,2: print loopTimer.getRunTime()
 		'in-game logger
 		line(0, scr.size.y - 1)-step(scr.size.x - 1, -logger.numEntries * 16), rgba(0, 0, 0, 127), bf

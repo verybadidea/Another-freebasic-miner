@@ -24,7 +24,8 @@ enum E_MINER_KEY
 	RKEY_PAGEUP '5
 	RKEY_PAGEDOWN '6
 	RKEY_SPACE '7
-	'RKEY_NULL '8 = list terminator
+	RKEY_TAB '7
+	'RKEY_NULL '9 = list terminator
 end enum
 
 enum E_MINER_STATE
@@ -66,10 +67,12 @@ type player_type
 	private:
 	dim as registered_key rkey
 	dim as map_type ptr pMap
-	dim as resource_type ptr pRes
+	'dim as resource_type ptr pRes
 	dim as flower_type ptr pFlower
 	dim as image_type ptr pImg 'current image to display
-	dim as inventory_type inv
+	dim as inventory_type ptr pInv
+	dim as collectable_list ptr pCollectList
+	dim as boolean showInv = true
 	dim as int2d requestDir
 	dim as int2d currentGridPos
 	dim as int2d markerGridPos
@@ -93,7 +96,8 @@ type player_type
 	dim as image_type imgDrillUp(NUM_IMG_DRILL_UP-1)
 	dim as image_type imgDead
 	public:
-	declare function init(byref resource as resource_type, byref flower as flower_type) as integer
+	declare function init(byref flower as flower_type, _
+		byref inv as inventory_type, byref collectList as collectable_list) as integer
 	declare sub reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	declare function loadImg() as integer
 	declare sub setKeys()
@@ -112,12 +116,15 @@ type player_type
 end type
 
 'copy from image buffer
-function player_type.init(byref resource as resource_type, byref flower as flower_type) as integer
+function player_type.init(byref flower as flower_type, _
+	byref inv as inventory_type, byref collectList as collectable_list) as integer
 	if loadImg() <> 0 then return -1
 	anim.init(pImg) 'tell the anim class where the player image is
 	setKeys() 'assing keys
-	pRes = @resource
+	'pRes = @resource
 	pFlower = @flower
+	pInv = @inv
+	pCollectList = @collectList
 	return 0
 end function
 
@@ -189,6 +196,7 @@ sub player_type.setKeys()
 	rkey.add(FB.SC_PAGEDOWN)
 	rkey.add(FB.SC_PAGEUP)
 	rkey.add(FB.SC_SPACE)
+	rkey.add(FB.SC_TAB)
 end sub
 
 sub player_type.processKeyInput()
@@ -247,6 +255,11 @@ sub player_type.processKeyInput()
 		requestedAction = -1
 		'logger.add("stop action")
 		idleWaitTmr.start(5.0)
+	end if
+
+	'showInv = rkey.isDown(RKEY_TAB)
+	if rkey.isPressed(RKEY_TAB) then
+		showInv = (not showInv)
 	end if
 
 	rkey.updateState() 'very important
@@ -426,17 +439,21 @@ sub player_type.updateAction()
 		'remove tile
 		if pMap->tile(actionGridPos).health <= 0 then
 			requestedAction = -1 'reset action
+			'check if resource
 			if pMap->tile(actionGridPos).flags and IS_RESOURCE then
-				'pMap->tile(actionGridPos).set(0, bgId as short, IS_RESOURCE, 0)
+				''pMap->tile(actionGridPos).set(0, bgId as short, IS_RESOURCE, 0)
 				dim as short fgId = pMap->tile(actionGridPos).fgId
-				logger.add("Resource image Id: " & fgId)
-				logger.add("Resource found: " & pRes->resId(fgId))
-				pMap->tile(actionGridPos).fgId -= 22 'magic number!
-				pMap->tile(actionGridPos).bgId = bg_shadow
-				pMap->tile(actionGridPos).flags = IS_COLLECT
-			else
-				pMap->tile(actionGridPos).set(0, bgImgId, IS_EMPTY)
+				'logger.add("Resource image Id: " & fgId)
+				'logger.add("Resource found: " & pRes->resId(fgId))
+				'pMap->tile(actionGridPos).fgId -= 22 'magic number!
+				'pMap->tile(actionGridPos).bgId = bg_shadow
+				'pMap->tile(actionGridPos).flags = IS_COLLECT
+				dim as flt2d actionMapPos = flt2d(actionGridPos.x * GRID_SIZE_X, actionGridPos.y * GRID_SIZE_Y)
+				pCollectList->add(actionMapPos, fgId - 22)
+			'else
 			end if
+			'clear tile
+			pMap->tile(actionGridPos).set(0, bgImgId, IS_EMPTY)
 			'check flower above & remove
 			dim as int2d aboveGridPos = actionGridPos + int2d(0, -1)
 			'pMap->killFlower(actionGridPos + int2d(0, -1))
@@ -598,12 +615,14 @@ sub player_type.draw_()
 		imgBufAll.image(ol_item_drill).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 	end select
 	'some debug info
-	locate 1,1: print getStateStr();
-	locate 2,1: print getGridPos(posMap);
-	'locate 3,1: print format(miner.idleWaitTmr.timeLeft(), "0.0");
-	locate 3,1: print requestDir;
-	'display inventory
-	for i as integer = 0 to inv.numItems() - 1
-		f1.printTextAk(10, 100 + i * 20, inv.item(i).label & ": " & inv.item(i).amount, FHA_LEFT)
-	next
+	locate 1,1: print getStateStr()
+	locate 2,1: print getGridPos(posMap)
+	'locate 3,1: print format(miner.idleWaitTmr.timeLeft(), "0.0")
+	'locate 3,1: print requestDir
+	'display inventory, move to main?
+	if showInv then
+		for i as integer = 0 to pInv->numItems() - 1
+			f1.printTextAk(10, 100 + i * 20, pInv->item(i).label & ": " & pInv->item(i).amount, FHA_LEFT)
+		next
+	end if
 end sub

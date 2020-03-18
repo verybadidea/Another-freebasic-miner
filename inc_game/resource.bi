@@ -10,6 +10,7 @@ end type
 
 constructor resource_type()
 	'set all invalid
+	logger.add("resId range: " & lbound(resId) & " to " & ubound(resId))
 	for i as integer = lbound(resId) to ubound(resId)
 		resId(i) = -1
 	next
