@@ -40,7 +40,7 @@ dim shared as font_type f1
 dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 
 #include once "inc_game/image_enum.bi"
-#include once "inc_game/resource.bi"
+#include once "inc_game/res_inv.bi"
 #include once "inc_game/directions.bi"
 #include once "inc_game/grid.bi"
 #include once "inc_game/flower.bi"
@@ -93,10 +93,10 @@ end function
 function main() as string
 	dim as player_type miner
 	dim as viewer_type viewer
-	dim as resource_type resource
 	dim as flower_type flower
-	dim as collectable_list collectList
+	dim as resource_type resource
 	dim as inventory_type inv
+	dim as collect_list collectList = collect_list(resource, inv, 0)
 
 	dim as E_INPUT_STATE inputState = iif(1, INPUT_PLAYER, INPUT_VIEW_MODE)
 	dim as flt2d viewPosTl 'top-left
@@ -143,7 +143,7 @@ function main() as string
 		miner.update(loopTimer.getdt())
 		viewer.update(loopTimer.getdt())
 		if flower.update() = true then map.tryPlaceFlower()
-		collectList.update(miner.posMap, 10.0, resource, inv, loopTimer.getdt())
+		collectList.update(miner.posMap, 10.0, loopTimer.getdt())
 
 		select case inputState
 		case INPUT_PLAYER

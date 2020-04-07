@@ -1,27 +1,38 @@
 type resource_type
 	public:
-	dim as short imgId(0 to 9) = {fg_resource_salt, fg_resource_cole, _
+	dim as short resImgId(0 to 9) = {fg_resource_salt, fg_resource_cole, _
 		fg_resource_iron, fg_resource_gold, fg_resource_silver, fg_resource_lazurite, _
 		fg_resource_platin, fg_resource_ruby, fg_resource_uranium, fg_resource_sapphire}
-	dim as short resId(fg_resource_cole to fg_resource_yorbinium)
+	dim as short objImgId(0 to 9) = {fg_object_salt, fg_object_cole, _
+		fg_object_iron, fg_object_gold, fg_object_silver, fg_object_lazurite, _
+		fg_object_platin, fg_object_ruby, fg_object_uranium, fg_object_sapphire}
+	'dim as short resId(fg_resource_cole to fg_resource_yorbinium)
 	declare constructor()
+	declare function resImg2ResId(imgId as short) as integer
 	declare function numRes() as integer
 end type
 
 constructor resource_type()
 	'set all invalid
-	logger.add("resId range: " & lbound(resId) & " to " & ubound(resId))
-	for i as integer = lbound(resId) to ubound(resId)
-		resId(i) = -1
-	next
-	'set known resources, lookup table
-	for i as integer = 0 to ubound(imgId)
-		resId(imgId(i)) = i
-	next
+	'~ logger.add("resId range: " & lbound(resId) & " to " & ubound(resId))
+	'~ for i as integer = lbound(resId) to ubound(resId)
+		'~ resId(i) = -1
+	'~ next
+	'~ 'set known resources, lookup table
+	'~ for i as integer = 0 to ubound(imgId)
+		'~ resId(imgId(i)) = i
+	'~ next
 end constructor
 
+function resource_type.resImg2ResId(imgId as short) as integer
+	for i as integer = 0 to ubound(resImgId)
+		if resImgId(i) = imgId then return i
+	next
+	return -1 'fail, not found
+end function
+
 function resource_type.numRes() as integer
-	return ubound(imgId) + 1
+	return ubound(resImgId) + 1
 end function
 
 '-------------------------------------------------------------------------------

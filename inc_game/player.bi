@@ -71,7 +71,7 @@ type player_type
 	dim as flower_type ptr pFlower
 	dim as image_type ptr pImg 'current image to display
 	dim as inventory_type ptr pInv
-	dim as collectable_list ptr pCollectList
+	dim as collect_list ptr pCollectList
 	dim as boolean showInv = true
 	dim as int2d requestDir
 	dim as int2d currentGridPos
@@ -97,7 +97,7 @@ type player_type
 	dim as image_type imgDead
 	public:
 	declare function init(byref flower as flower_type, _
-		byref inv as inventory_type, byref collectList as collectable_list) as integer
+		byref inv as inventory_type, byref collectList as collect_list) as integer
 	declare sub reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	declare function loadImg() as integer
 	declare sub setKeys()
@@ -117,7 +117,7 @@ end type
 
 'copy from image buffer
 function player_type.init(byref flower as flower_type, _
-	byref inv as inventory_type, byref collectList as collectable_list) as integer
+	byref inv as inventory_type, byref collectList as collect_list) as integer
 	if loadImg() <> 0 then return -1
 	anim.init(pImg) 'tell the anim class where the player image is
 	setKeys() 'assing keys
@@ -449,7 +449,7 @@ sub player_type.updateAction()
 				'pMap->tile(actionGridPos).bgId = bg_shadow
 				'pMap->tile(actionGridPos).flags = IS_COLLECT
 				dim as flt2d actionMapPos = flt2d(actionGridPos.x * GRID_SIZE_X, actionGridPos.y * GRID_SIZE_Y)
-				pCollectList->add(actionMapPos, fgId - 22)
+				pCollectList->add(actionMapPos, fgId)
 			'else
 			end if
 			'clear tile
@@ -511,7 +511,7 @@ function player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d) 
 			end if
 			'snap to center of ladder
 			if prevState <> state then
-				 posChangeAct.x = (targetGridPos.x * GRID_SIZE_X) - posMap.x
+				posChangeAct.x = (targetGridPos.x * GRID_SIZE_X) - posMap.x
 			end if
 		else
 			'logger.add("cannot climb, too far from ladder")

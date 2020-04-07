@@ -134,7 +134,7 @@ sub map_type.setNormal()
 		'height dependent resource
 		iResource = (blockPos.y * pRes->numRes()) \ size.y
 		if iResource < 0 or iResource >= pRes->numRes() then logger.add("map_type.setNormal()")
-		imgId = pRes->imgId(iResource)
+		imgId = pRes->resImgId(iResource)
 		veinLen = rndRange(MIN_VEIN_LEN, MAX_VEIN_LEN)
 		for iBlock as integer = 0 to veinLen - 1
 			if inRange(blockPos.x, 1, size.x - 2) andalso inRange(blockPos.y, 2, size.y - 2) then

@@ -11,64 +11,48 @@ Control keys:
 * |tab| to show inventory
 * |escape| to exit
 
-Todo:
-* Fix -22, +22
+Todo (bugs & changes):
+* In processKeyInput() do not set state, request (then no need for prevState as well?), requestState?
+* Do not move on to ladder when standing and pressing down (for drilling)
 * make getMapPos(gridPos) function
-* Resize object and move sprites to different folder
-* Background images
+* Resize object and move sprites to different folder?
 * More images, better ordered, e.g. trees
 * Set marker invalid when swithing to idle?
-* Make collectable object, not part of map? Objects disapear after 30 seconds? blink last 10 second?
-* Check player object distance.
-* make imgBufAll not shared
-* Use salt for? Food?
-* growing trees/fruit plants
+* Check player object distance?
 * Collect a resource, show resource object ball -> items list? can drop as well?
+* make imgBufAll not shared
 * Block movement / changing marker pos during action (e.g drilling)
 * Allow building ladder at current tile?
 * Build ladders while climbing
-* Do not move on ladder when standing and pressing down (for drilling)
-* Rock layers
-* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
-* Drill is faster, but no resource
-* shovel action, required for flower removal?
-* Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
-* Make unsupported ladders and flowers drop? and drop collatables
 * Improve draw tool indicator code
 * Change of player class stores images, less variabes
 * Container / class for player images?
-* separate keys for build & destroy
-* Use <tab> to switch between build and destroy?
-* Use mousewheel to change tool / build selection?
-* Auto update destroy indicator? pick, drill, shovel, ... No?
-* change from damage to health, init, remove public
+* fix size of images? 66x66 ?
 * Freeze miner during action?
 * Block movement during action, e.g. pick axe. Or stop action on move. State Busy?
 * reset idle on any key press (e.g. escape)' and start action anim
-* draw square centered? What?
-* add grass to all top blocks? (grass dirt block, not grass flower)
-* invertory:
-  * Stuff that can be placed: blocks, ladders, lamps
-    * background stuff: blocks
-    * foreground stuff: ladders, lamps
-  * Stuff that cannot be placed: pick axe, dynamite, food, coal. Why not?
-* Show bagpack with number of items
-* use player size struct, AABB? note: height not centered with tile
-* fix size of images? 66x66 ?
 * Add screenshot to wiki
-* build stuff
+* clean up image.bi : alignment struct -> single center flag, vert/horz combined
+* font.bi : change pTrim to struct, and use redim
+* font.bi : add vert align
+* Drill is faster, but no resource
+
+Todo (features):
+* Build space for house and spaceship
+* Background images, sky tiles?
+* Use salt for? Food?
+* growing trees/fruit plants
+* Rock layers
+* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
+* Shovel action, required for flower removal? -> collect plant?
+* Make unsupported ladders and flowers drop? and drop collatables
+* Auto update destroy indicator? pick, drill, shovel, ... No?
+* add grass to all top blocks? (grass dirt block, not grass flower)
 * Display player red on getting damaged
 * map load/save + player stuff
 * map editor
 * add sound
-* Change anim.start(), supply array instead of first image + numImages
-* Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
-* clean up image.bi : alignment struct -> single center flag, vert/horz combined
-* font.bi : change pTrim to struct, and use redim
-* font.bi : add vert align
 * ladders build animation
-* mouse cursor, aiming direction?
-* sky tiles?
 * ladder bridge issue (climbing vs walking, in font of / behind ladder)
 * loop world left-right
 * item menu
@@ -78,22 +62,42 @@ Todo:
 * day/night
 * Main menu
 * item conversion and crafting
-* check 0_plans_todo_ideas_0
+* UI:
+  * separate keys for build & destroy
+  * Quick tool selection keys: 1 = pick axe, 2 = drill, etc.
+  * Use <tab> to switch between build and destroy?
+  * Use mousewheel to change tool / build selection?
+  * mouse cursor, aiming direction?
+* invertory:
+  * Stuff that can be placed: blocks, ladders, lamps
+    * background stuff: blocks
+    * foreground stuff: ladders, lamps
+  * Stuff that cannot be placed: pick axe, dynamite, food, coal. Why not?
+  * Show bagpack with number of items, total?
 * Goal steps:
-* 1.food for energy restore
-* 2.wood home and ladders and signs for storage
-* 3.factory for smelting?
-* 4.build spaceship, go to next world, more difficult, end goal go home, display universe
+  * 1.food for energy restore
+  * 2.wood home and ladders and signs for storage (present losing on death)
+  * 3.factory for smelting?
+  * 4.build spaceship, go to next world, more difficult, end goal go home, display universe
+  * check 0_plans_todo_ideas_0
 
-Don't:
-
+Don't/obsolete:
 * mapPos: dived by grid size?
 * plants in object class, needs update, add, remove, etc.
 * Change NUM_IMG_WALK to MINER_IMG_WALK, use namespace?
 * make map shared?
+* Make collectable object, not part of map? Objects disapear after 30 seconds? blink last 10 second?
+* Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
+
+Unclear:
+* change from damage to health, init, remove public
+* draw square centered? What?
+* use player size struct, AABB? note: height not centered with tile
+* build stuff
+* Change anim.start(), supply array instead of first image + numImages
 
 Done:
-
+* 05-04-2020: Fix -22, +22, change resource: resourceImgId(i), collectImgId(i)
 * 12-03-2020: Only show inventory while <tab> is pressed
 * 12-03-2020: Flower stuff cleaned up
 * 08-03-2020: map_tile class added, map_type changes
@@ -150,6 +154,6 @@ Done:
 	git status
 	https://minecraft.gamepedia.com/Controls
 
-no long pause
+no long pause (it happens)
 start with something simple each day
 don't worry to much about the design, implement first then improve
