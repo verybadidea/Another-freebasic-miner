@@ -3,6 +3,8 @@ https://freebasic.net/forum/viewtopic.php?f=15&t=28025
 
 Status: **Work in progress**
 
+![Game preview](preview/miner_2020-04-13.png)
+
 Control keys:
 
 * |up|, |down|, |left|, |right| arrow keys
