@@ -12,18 +12,11 @@ Control keys:
 * |escape| to exit
 
 Todo (bugs & changes):
-* In processKeyInput() do not set state, request (then no need for prevState as well?), requestState?
-* Do not move on to ladder when standing and pressing down (for drilling)
 * make getMapPos(gridPos) function
-* Resize object and move sprites to different folder?
 * More images, better ordered, e.g. trees
-* Set marker invalid when swithing to idle?
-* Check player object distance?
-* Collect a resource, show resource object ball -> items list? can drop as well?
-* make imgBufAll not shared
 * Block movement / changing marker pos during action (e.g drilling)
-* Allow building ladder at current tile?
-* Build ladders while climbing
+* Allow building ladder at current tile? Key to set current tile? ENTER?
+* Build ladders while climbing?
 * Improve draw tool indicator code
 * Change of player class stores images, less variabes
 * Container / class for player images?
@@ -36,6 +29,9 @@ Todo (bugs & changes):
 * font.bi : change pTrim to struct, and use redim
 * font.bi : add vert align
 * Drill is faster, but no resource
+* Resize object and move sprites to different folder?
+* Set marker invalid when swithing to idle?
+* make imgBufAll not shared
 
 Todo (features):
 * Build space for house and spaceship
@@ -88,6 +84,7 @@ Don't/obsolete:
 * make map shared?
 * Make collectable object, not part of map? Objects disapear after 30 seconds? blink last 10 second?
 * Two fg layers needed: for cracks + diamands? Or draw cracks only depending on block healthe/damage.
+* In processKeyInput() do not set state, request (then no need for prevState as well?), requestState?
 
 Unclear:
 * change from damage to health, init, remove public
@@ -95,8 +92,13 @@ Unclear:
 * use player size struct, AABB? note: height not centered with tile
 * build stuff
 * Change anim.start(), supply array instead of first image + numImages
+* Check player object distance?
+* Collect a resource, show resource object ball -> items list? can drop as well?
 
 Done:
+* 13-04-2020: Miner does not move on to ladder when standing and pressing down (for drilling down)
+* 13-04-2020: miner::isStanding(), isWalking(), isClimbing() added
+* 13-04-2020: miner::tryWalk(), tryClimb(), tryFall() do not set state via return
 * 05-04-2020: Fix -22, +22, change resource: resourceImgId(i), collectImgId(i)
 * 12-03-2020: Only show inventory while <tab> is pressed
 * 12-03-2020: Flower stuff cleaned up
@@ -157,3 +159,24 @@ Done:
 no long pause (it happens)
 start with something simple each day
 don't worry to much about the design, implement first then improve
+
+main()
+* miner.processKeyInput()
+* miner.update()
+* viewer.update()
+* flower.update()
+* collectList.update()
+* map.draw_()
+* collectList.draw_()
+* miner.draw_()
+
+miner.update()
+* state = tryWalk()
+* state = tryClimb()
+* tryAction()
+* updateAction()
+* state = tryFall()
+* updatePos()
+* start/stop animations/timers
+* anim.update()
+

@@ -1,7 +1,5 @@
 #include once "string.bi"
 
-#undef PMAP 'used as map pointer in player class
-
 #include once "inc_lib/screen_v03.bi"
 #include once "inc_lib/keyboard_v01.bi"
 #include once "inc_lib/registered_key_02.bi"
@@ -142,7 +140,7 @@ function main() as string
 		
 		miner.update(loopTimer.getdt())
 		viewer.update(loopTimer.getdt())
-		if flower.update() = true then map.tryPlaceFlower()
+		if flower.update() = TRUE then map.tryPlaceFlower()
 		collectList.update(miner.posMap, 10.0, loopTimer.getdt())
 
 		select case inputState
