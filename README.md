@@ -14,6 +14,7 @@ Control keys:
 * |escape| to exit
 
 Todo (bugs & changes):
+* create image_enum.bi tool
 * make getMapPos(gridPos) function
 * More images, better ordered, e.g. trees
 * Block movement / changing marker pos during action (e.g drilling)
@@ -31,18 +32,17 @@ Todo (bugs & changes):
 * font.bi : change pTrim to struct, and use redim
 * font.bi : add vert align
 * Drill is faster, but no resource
-* Resize object and move sprites to different folder?
 * Set marker invalid when swithing to idle?
 * make imgBufAll not shared
 
 Todo (features):
+* growing trees/fruit plants
+* Shovel action, required for flower removal? -> collect plant?
+* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
 * Build space for house and spaceship
 * Background images, sky tiles?
 * Use salt for? Food?
-* growing trees/fruit plants
 * Rock layers
-* Dynamite: Place, pick-up, ignite, can fall, damages players, countdown, explosions, different sizes
-* Shovel action, required for flower removal? -> collect plant?
 * Make unsupported ladders and flowers drop? and drop collatables
 * Auto update destroy indicator? pick, drill, shovel, ... No?
 * add grass to all top blocks? (grass dirt block, not grass flower)
@@ -98,6 +98,7 @@ Unclear:
 * Collect a resource, show resource object ball -> items list? can drop as well?
 
 Done:
+* 14-04-2020: Resource object sprites moved and resized to 32x32
 * 13-04-2020: Miner does not move on to ladder when standing and pressing down (for drilling down)
 * 13-04-2020: miner::isStanding(), isWalking(), isClimbing() added
 * 13-04-2020: miner::tryWalk(), tryClimb(), tryFall() do not set state via return
@@ -148,6 +149,8 @@ Done:
 	healthbar:
 	convert -verbose -crop 120x16+37+108 test.bmp test2.bmp
 	mogrify -verbose -crop 120x16+37+108 *.bmp
+	res-object:
+	mogrify -verbose -crop 32x32+16+32 *.bmp
 	ls -lU
 	https://en.wikipedia.org/wiki/Markdown
 	git status

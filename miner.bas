@@ -100,13 +100,12 @@ function main() as string
 	dim as flt2d viewPosTl 'top-left
 
 	dim as integer numLoaded = 0
-	dim as string dirName
+	dim as string imageDir(...) = { "images/", "images/actor/", "images/tiles_bg/", _
+		"images/tiles_fg/", "images/res_objects/", "images/health_bar/", "images/items/"}
 
-	if loadImagesFromFile("images/") <> 0 then return "Error: No actor images"
-	if loadImagesFromFile("images/actor/") <> 0 then return "Error: No actor images"
-	if loadImagesFromFile("images/tiles_bg/") <> 0 then return "Error: No background images"
-	if loadImagesFromFile("images/tiles_fg/") <> 0 then return "Error: No foreground images"
-	if loadImagesFromFile("images/overlay/") <> 0 then return "Error: No overlay images"
+	for i as integer = 0 to ubound(imageDir)
+		if loadImagesFromFile(imageDir(i)) <> 0 then return "Error: No images at: " & imageDir(i)
+	next
 	logger.add("Total images loaded: " & imgBufAll.numImages)
 
 	dim as map_type map = map_type(resource, flower)

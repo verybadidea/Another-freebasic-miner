@@ -92,7 +92,8 @@ sub collect_list.draw_(posViewTl as flt2d)
 			'draw item
 			dim as flt2d posScr = .posMap - posViewTl
 			dim as short imgId = pRes->objImgId(.resId)
-			imgBufAll.image(imgId).drawxym(posScr.x, posScr.y - 16, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+			'imgBufAll.image(imgId).drawxym(posScr.x, posScr.y - 16, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+			imgBufAll.image(imgId).drawxym(posScr.x, posScr.y, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
 			'circle(posScr.x, posScr.y), radius, rgba(160, 160, 0, 255),,,,f
 		end with
 	next

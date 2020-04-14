@@ -1,8 +1,9 @@
 'images in alphabetical order!
 
 enum E_IMG_ALL
+	'images/
 	img_null
-	
+	'images/actor/
 	act_climb_1
 	act_climb_2
 	act_climb_3
@@ -36,7 +37,7 @@ enum E_IMG_ALL
 	act_wink_2
 	act_wink_3
 	act_wink_4
-	
+	'images/tiles_bg/
 	bg_block_2a
 	bg_block_2b
 	bg_block_2
@@ -84,7 +85,7 @@ enum E_IMG_ALL
 	bg_wall_3
 	bg_wall_4
 	bg_wall_5
-
+	'images/tiles_fg/
 	fg_artefact_bone_1
 	fg_artefact_bone_2
 	fg_artefact_g1
@@ -134,28 +135,6 @@ enum E_IMG_ALL
 	fg_monster_0
 	fg_monster_1
 	fg_monster_2
-	fg_object_cole
-	fg_object_diamond_blue
-	fg_object_diamond_green
-	fg_object_diamond_pink
-	fg_object_diamond_red
-	fg_object_diamond_small_blue
-	fg_object_diamond_small_green
-	fg_object_diamond_small_pink
-	fg_object_emerald_blue
-	fg_object_emerald_red
-	fg_object_emerald_yellow
-	fg_object_gold
-	fg_object_iron
-	fg_object_lazurite
-	fg_object_patrickium
-	fg_object_platin
-	fg_object_ruby
-	fg_object_salt
-	fg_object_sapphire
-	fg_object_silver
-	fg_object_uranium
-	fg_object_yorby
 	fg_resource_cole
 	fg_resource_diamond_blue
 	fg_resource_diamond_green
@@ -190,7 +169,30 @@ enum E_IMG_ALL
 	fg_tile_deco_0
 	fg_tile_deco_1
 	fg_tile_deco_2
-
+	'images/res_objects/
+	fg_object_cole
+	fg_object_diamond_blue
+	fg_object_diamond_green
+	fg_object_diamond_pink
+	fg_object_diamond_red
+	fg_object_diamond_small_blue
+	fg_object_diamond_small_green
+	fg_object_diamond_small_pink
+	fg_object_emerald_blue
+	fg_object_emerald_red
+	fg_object_emerald_yellow
+	fg_object_gold
+	fg_object_iron
+	fg_object_lazurite
+	fg_object_patrickium
+	fg_object_platin
+	fg_object_ruby
+	fg_object_salt
+	fg_object_sapphire
+	fg_object_silver
+	fg_object_uranium
+	fg_object_yorby
+	'images/health_bar/
 	ol_health_0
 	ol_health_1
 	ol_health_2
@@ -200,8 +202,9 @@ enum E_IMG_ALL
 	ol_health_6
 	ol_health_7
 	ol_health_8
+	'images/items/
 	ol_item_drill
 	ol_item_pick
-
+	'xxx
 	img_overflow
 end enum
