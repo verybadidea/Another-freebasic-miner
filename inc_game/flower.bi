@@ -9,8 +9,7 @@ type flower_type
 	dim as double animDuration = 0.2
 	dim as short animFrame(0 to 3) = {0, 1, 2, 1}
 	dim as integer firstImgId(0 to 4) = {_
-		fg_landscape_flower_1a, fg_landscape_flower_2a, fg_landscape_flower_3a, _
-		fg_landscape_flower_4a, fg_landscape_gras_1}
+		pl_flower_1a, pl_flower_2a, pl_flower_3a, pl_flower_4a, pl_gras_1}
 	public:
 	declare constructor()
 	declare function randomImgId() as short

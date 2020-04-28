@@ -113,21 +113,6 @@ enum E_IMG_ALL
 	fg_explosive_dynamite_2
 	fg_explosive_dynamite_3
 	fg_explosive_dynamite_4
-	fg_landscape_flower_1a
-	fg_landscape_flower_1b
-	fg_landscape_flower_1c
-	fg_landscape_flower_2a
-	fg_landscape_flower_2b
-	fg_landscape_flower_2c
-	fg_landscape_flower_3a
-	fg_landscape_flower_3b
-	fg_landscape_flower_3c
-	fg_landscape_flower_4a
-	fg_landscape_flower_4b
-	fg_landscape_flower_4c
-	fg_landscape_gras_1
-	fg_landscape_gras_2
-	fg_landscape_gras_3
 	fg_landscape_pile
 	fg_lava_2a
 	fg_lava_2
@@ -169,6 +154,48 @@ enum E_IMG_ALL
 	fg_tile_deco_0
 	fg_tile_deco_1
 	fg_tile_deco_2
+	'images/plants/
+	pl_carrot_0
+	pl_carrot_1
+	pl_carrot_2
+	pl_carrot_3
+	pl_flower_1a
+	pl_flower_1b
+	pl_flower_1c
+	pl_flower_2a
+	pl_flower_2b
+	pl_flower_2c
+	pl_flower_3a
+	pl_flower_3b
+	pl_flower_3c
+	pl_flower_4a
+	pl_flower_4b
+	pl_flower_4c
+	pl_grape_0
+	pl_grape_10
+	pl_grape_1
+	pl_grape_2
+	pl_grape_3
+	pl_grape_4
+	pl_grape_5
+	pl_grape_6
+	pl_grape_7
+	pl_grape_8
+	pl_grape_9
+	pl_gras_1
+	pl_gras_2
+	pl_gras_3
+	pl_tomato_0
+	pl_tomato_1
+	pl_tomato_2
+	pl_tomato_3
+	pl_tomato_4
+	pl_tomato_5
+	pl_tomato_6
+	pl_tomato_7
+	pl_tree_1
+	pl_tree_2
+	pl_tree_3
 	'images/res_objects/
 	fg_object_cole
 	fg_object_diamond_blue
@@ -204,7 +231,14 @@ enum E_IMG_ALL
 	ol_health_8
 	'images/items/
 	ol_item_drill
+	ol_item_jetpack
+	ol_item_ladder
 	ol_item_pick
+	ol_item_saber
+	ol_item_seed_carrot
+	ol_item_seed_grape
+	ol_item_seed_tomato
+	ol_item_spade
 	'xxx
 	img_overflow
 end enum

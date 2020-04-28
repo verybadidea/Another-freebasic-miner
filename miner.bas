@@ -31,7 +31,7 @@ const GRID_SIZE_X = 64, GRID_HALF_X = GRID_SIZE_X \ 2
 const GRID_SIZE_Y = 64, GRID_HALF_Y = GRID_SIZE_Y \ 2
 const as float GRAVITY = 1000 'pixels/s^2
 
-dim shared as screen_type scr = screen_type(800, 600, fb.GFX_ALPHA_PRIMITIVES) '1024, 768
+dim shared as screen_type scr = screen_type(960, 720, fb.GFX_ALPHA_PRIMITIVES) '1024, 768
 dim shared as int2d screenBorder = scr.size \ 3 'pixels, move to player class?
 dim shared as image_buffer_type imgBufAll
 dim shared as font_type f1
@@ -45,6 +45,7 @@ dim shared as logger_type logger = logger_type("", 5, 1.0) 'gamelog.txt
 #include once "inc_game/map.bi"
 #include once "inc_game/anim.bi"
 #include once "inc_game/collect.bi"
+#include once "inc_game/grow.bi"
 #include once "inc_game/player.bi"
 #include once "inc_game/viewer.bi"
 
@@ -93,27 +94,29 @@ function main() as string
 	dim as viewer_type viewer
 	dim as flower_type flower
 	dim as resource_type resource
+	dim as map_type map = map_type(resource, flower)
 	dim as inventory_type inv
 	dim as collect_list collectList = collect_list(resource, inv, 0)
+	dim as plant_grow_list plGrowList = plant_grow_list(map, 0)
 
 	dim as E_INPUT_STATE inputState = iif(1, INPUT_PLAYER, INPUT_VIEW_MODE)
 	dim as flt2d viewPosTl 'top-left
 
 	dim as integer numLoaded = 0
-	dim as string imageDir(...) = { "images/", "images/actor/", "images/tiles_bg/", _
-		"images/tiles_fg/", "images/res_objects/", "images/health_bar/", "images/items/"}
+	dim as string imageDir(...) = {_
+		"images/", "images/actor/", "images/tiles_bg/", "images/tiles_fg/", _
+		"images/plants/", "images/res_objects/", "images/health_bar/", "images/items/"}
 
 	for i as integer = 0 to ubound(imageDir)
 		if loadImagesFromFile(imageDir(i)) <> 0 then return "Error: No images at: " & imageDir(i)
 	next
 	logger.add("Total images loaded: " & imgBufAll.numImages)
 
-	dim as map_type map = map_type(resource, flower)
 	map.alloc(int2d(30, 100))
 	'map.setRandom()
 	map.setNormal()
 	
-	if miner.init(flower, inv, collectList) <> 0 then return "miner.init: fail"
+	if miner.init(flower, inv, collectList, plGrowList) <> 0 then return "miner.init: fail"
 	dim as int2d posMap = int2d(10 * GRID_SIZE_X, 0 * GRID_SIZE_Y) '= int2d((map.size.x * GRID_SIZE_X) \ 2, (map.size.y * GRID_SIZE_Y) \ 2)
 	miner.reset_(map, posMap, scr.cntr)
 
@@ -141,6 +144,7 @@ function main() as string
 		viewer.update(loopTimer.getdt())
 		if flower.update() = TRUE then map.tryPlaceFlower()
 		collectList.update(miner.posMap, 10.0, loopTimer.getdt())
+		plGrowList.update()
 
 		select case inputState
 		case INPUT_PLAYER

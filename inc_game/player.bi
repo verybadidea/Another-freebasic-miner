@@ -1,15 +1,48 @@
+type tool_type
+	dim as short imgId
+	dim as short amount
+end type
+
+enum E_MINER_TOOL
+	TOOL_LADDER
+	TOOl_SABER
+	TOOl_PICK
+	TOOl_DRILL
+	TOOL_SPADE
+	TOOL_JETPACK
+	TOOl_CARROT_SEED
+	TOOl_GRAPE_SEED
+	TOOl_TOMATO_SEED
+	TOOL_INVALID
+end enum
+
+dim shared as tool_type tool(TOOL_INVALID - 1) = {_
+	(ol_item_ladder, 20), _
+	(ol_item_saber, 1), _
+	(ol_item_pick, 1), _
+	(ol_item_drill, 1), _
+	(ol_item_spade, 1), _
+	(ol_item_jetpack, 0), _
+	(ol_item_seed_carrot, 10), _
+	(ol_item_seed_grape, 10), _
+	(ol_item_seed_tomato, 10)}
+
+'-------------------------------------------------------------------------------
+
 const NUM_IMG_WALK = 4
 const NUM_IMG_WINK = 4
 const NUM_IMG_CLIMB = 4
 const NUM_IMG_FALL = 2
 const NUM_IMG_HEALTH = 9
 const NUM_IMG_PICK = 2
+const NUM_IMG_SPADE = 2
 const NUM_IMG_DRILL_SIDE = 2
 const NUM_IMG_DRILL_DOWN = 2
 const NUM_IMG_DRILL_UP = 2
 
 const FRAME_TIME_PICK = 0.15
 const FRAME_TIME_DRILL = 0.10
+const FRAME_TIME_SPADE = 0.15
 const FRAME_TIME_IDLE = 0.10
 const FRAME_TIME_WALK = 0.15
 const FRAME_TIME_FALL = 0.15
@@ -43,13 +76,6 @@ enum E_MINER_STATE
 	MINER_DEAD '
 end enum
 
-enum E_MINER_TOOL
-	TOOL_LADDER '0
-	TOOl_PICK '1
-	TOOl_DRILL '2
-	TOOL_INVALID '3
-end enum
-
 const as integer MINER_MAX_HEALTH = NUM_IMG_HEALTH - 1
 const as integer MINER_HALF_WIDTH = 16 'pixels
 const as integer MINER_LADDER_DIST = 18 'pixels
@@ -71,6 +97,7 @@ type player_type
 	dim as image_type ptr pImg 'current image to display
 	dim as inventory_type ptr pInv
 	dim as collect_list ptr pCollectList
+	dim as plant_grow_list ptr pPlGrowList
 	dim as boolean showInv = TRUE
 	dim as int2d requestDir
 	dim as int2d currentGridPos
@@ -78,7 +105,7 @@ type player_type
 	dim as int2d actionGridPos
 	dim as integer state, lastState 'prevState
 	dim as integer health
-	dim as integer numLadders = 10
+	'dim as integer numLadders = 10
 	dim as integer selectedTool, actionTool 'remember when action timer has ended
 	dim as integer requestedAction
 	dim as float fallSpeed = 0 'pixels/s
@@ -90,13 +117,15 @@ type player_type
 	dim as image_type imgFall(NUM_IMG_FALL-1)
 	dim as image_type imgHealth(NUM_IMG_HEALTH-1)
 	dim as image_type imgPick(0 to 1, NUM_IMG_PICK-1)
+	dim as image_type imgSpade(0 to 1, NUM_IMG_SPADE-1)
 	dim as image_type imgDrillSide(0 to 1, NUM_IMG_DRILL_SIDE-1)
 	dim as image_type imgDrillDown(NUM_IMG_DRILL_DOWN-1)
 	dim as image_type imgDrillUp(NUM_IMG_DRILL_UP-1)
 	dim as image_type imgDead
 	public:
 	declare function init(byref flower as flower_type, _
-		byref inv as inventory_type, byref collectList as collect_list) as integer
+		byref inv as inventory_type, byref collectList as collect_list, _
+		byref plGrowList as plant_grow_list) as integer
 	declare sub reset_(byref map as map_type, posMap as int2d, posScr as int2d)
 	declare function loadImg() as integer
 	declare sub setKeys()
@@ -119,13 +148,15 @@ end type
 
 'copy from image buffer
 function player_type.init(byref flower as flower_type, _
-	byref inv as inventory_type, byref collectList as collect_list) as integer
+	byref inv as inventory_type, byref collectList as collect_list, _
+	byref plGrowList as plant_grow_list) as integer
 	if loadImg() <> 0 then return -1
 	anim.init(pImg) 'tell the anim class where the player image is
 	setKeys() 'assing keys
 	pFlower = @flower
 	pInv = @inv
 	pCollectList = @collectList
+	pPlGrowList = @plGrowList
 	return 0
 end function
 
@@ -164,6 +195,11 @@ function player_type.loadImg() as integer
 		if imgBufAll.validImage(act_pick_1 + i) = false then return -5
 		imgBufAll.image(act_pick_1 + i).copyTo(imgPick(DIR_LE, i))
 		imgBufAll.image(act_pick_1 + i).hFlipTo(imgPick(DIR_RI, i))
+	next
+	for i as integer = 0 to NUM_IMG_SPADE - 1
+		if imgBufAll.validImage(act_dig_1 + i) = false then return -5
+		imgBufAll.image(act_dig_1 + i).copyTo(imgSpade(DIR_LE, i))
+		imgBufAll.image(act_dig_1 + i).hFlipTo(imgSpade(DIR_RI, i))
 	next
 	for i as integer = 0 to NUM_IMG_DRILL_SIDE - 1
 		if imgBufAll.validImage(act_drill_1 + i) = false then return -6
@@ -408,8 +444,10 @@ sub player_type.tryAction() 'perform action
 		select case requestedAction
 		case TOOL_LADDER
 			if (pMap->tile(markerGridPos).flags and (IS_SOLID or IS_CLIMB)) = 0 then
-				if numLadders > 0 then
-					numLadders -= 1
+				'if numLadders > 0 then
+				if tool(TOOL_LADDER).amount > 0 then
+					'numLadders -= 1
+					tool(TOOL_LADDER).amount -= 1
 					dim as integer bgImgId = iif(markerGridPos.y = 0, -1, bg_shadow)
 					pMap->tile(markerGridPos).set(fg_construction_ladder, bgImgId, IS_CLIMB, 1)
 				end if
@@ -450,6 +488,20 @@ sub player_type.tryAction() 'perform action
 					'no drilling while climbing, falling or walking
 				end select
 			end if
+		case TOOl_CARROT_SEED '3
+			if tool(selectedTool).amount > 0 then
+				if (pMap->tile(markerGridPos).flags and IS_EMPTY) then
+					if (pMap->tile(markerGridPos + int2d(0, 1)).flags and IS_SOLID) then
+						pMap->tile(markerGridPos).set(plant(PL_CARROT).fistImgId, 0, IS_PLANT, 1)
+						tool(selectedTool).amount -= 1
+						pPlGrowList->add(markerGridPos, PL_CARROT)
+					end if
+				end if
+			else
+				logger.add("No more carrot seed")
+			end if
+		case TOOl_GRAPE_SEED '4
+		case TOOl_TOMATO_SEED '5
 		case else
 			'logger.add("Invalid action")
 		end select
@@ -507,7 +559,7 @@ sub player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d)
 				state = iif(yChangeReq < 0, MINER_CLIMB_UP, MINER_CLIMB_DOWN)
 			else
 				if isClimbing(lastState) then 
-					logger.add("cannot climb, end of ladder")
+					'logger.add("cannot climb, end of ladder")
 					posChangeAct.y = (targetGridPos.y * GRID_SIZE_Y + tileEgdeOffset) - (posMap.y + playerEdgeOffset)
 					state = MINER_CLIMB_STOP
 				else
@@ -515,11 +567,11 @@ sub player_type.tryClimb(yChangeReq as float, byref posChangeAct as flt2d)
 				end if
 			end if
 		else
-			logger.add("cannot climb, too far from ladder")
+			'logger.add("cannot climb, too far from ladder")
 			state  = MINER_IDLE
 		end if
 	else
-		logger.add("cannot climb, no ladder at current tile")
+		'logger.add("cannot climb, no ladder at current tile")
 		state  = MINER_IDLE
 	end if
 end sub
@@ -617,19 +669,14 @@ sub player_type.draw_()
 		imgHealth(health).drawxym(scr.edge.x - 10 , 10, IHA_RIGHT, IVA_TOP, IDM_ALPHA)
 	end if
 	'draw tool indicator
-	line(scr.edge.x - 85, scr.edge.y - 85)-step(63 + 14, 63 + 14), rgba(127,127,127,255), b
-	line(scr.edge.x - 84, scr.edge.y - 84)-step(63 + 12, 63 + 12), rgba(63,63,63,255), b
-	line(scr.edge.x - 83, scr.edge.y - 83)-step(63 + 10, 63 + 10), rgba(0,0,0,127), bf
-	select case selectedTool
-	case TOOL_LADDER
-		imgBufAll.image(fg_construction_ladder).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
-		f1.printTextAk(scr.edge.x - 80 + 64, scr.edge.y - 90 + 50, str(numLadders), FHA_RIGHT)
-	case TOOL_PICK
-		imgBufAll.image(ol_item_pick).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
-	case TOOL_DRILL
-		imgBufAll.image(ol_item_drill).drawxym(scr.edge.x - 80 + 32, scr.edge.y - 80 + 32, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
-	end select
-	'some debug info
+	dim as integer xoffs = 52, yoffs = 52, xmarg = 42, ymarg = 42
+	dim as integer xcpos = scr.edge.x - xoffs, ycpos = scr.edge.y - yoffs
+	line(xcpos - (xmarg - 0), ycpos - (ymarg - 0))-(xcpos + (xmarg + 0), ycpos + (ymarg + 0)), rgba(127,127,127,255), b
+	line(xcpos - (xmarg - 1), ycpos - (ymarg - 1))-(xcpos + (xmarg + 1), ycpos + (ymarg + 1)), rgba(63,63,63,255), b
+	line(xcpos - (xmarg - 2), ycpos - (ymarg - 2))-(xcpos + (xmarg + 2), ycpos + (ymarg + 2)), rgba(0,0,0,127), bf
+	imgBufAll.image(tool(selectedTool).imgId).drawxym(xcpos, ycpos, IHA_CENTER, IVA_CENTER, IDM_ALPHA)
+	f1.printTextAk(xcpos + xmarg - 6, ycpos + ymarg - 28, str(tool(selectedTool).amount), FHA_RIGHT)
+
 	locate 1,1: print getStateStr()
 	locate 2,1: print getGridPos(posMap)
 	'locate 3,1: print format(miner.idleWaitTmr.timeLeft(), "0.0")
